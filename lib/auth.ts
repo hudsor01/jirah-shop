@@ -1,0 +1,53 @@
+import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Validates the current user is an admin.
+ * Returns the user on success; throws on failure.
+ *
+ * Usage:  const user = await requireAdmin();
+ */
+export async function requireAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Unauthorized: not authenticated");
+  }
+
+  if (user.app_metadata?.role !== "admin") {
+    throw new Error("Forbidden: admin access required");
+  }
+
+  return user;
+}
+
+/**
+ * Validates that a redirect target is a safe relative path.
+ * Prevents open-redirect attacks by rejecting absolute URLs,
+ * protocol-relative URLs (//evil.com), and other schemes.
+ */
+export function sanitizeRedirect(target: string): string {
+  // Must start with a single slash and NOT be protocol-relative
+  if (!target.startsWith("/") || target.startsWith("//")) {
+    return "/";
+  }
+
+  // Block backslash tricks (e.g. /\evil.com)
+  if (target.includes("\\")) {
+    return "/";
+  }
+
+  return target;
+}
+
+/**
+ * Escapes special PostgREST filter characters in user-supplied search
+ * strings to prevent filter injection via `.or()` or `.ilike()`.
+ */
+export function sanitizeSearchInput(input: string): string {
+  // Remove characters that have meaning in PostgREST filter strings
+  return input.replace(/[,()\\]/g, "");
+}
