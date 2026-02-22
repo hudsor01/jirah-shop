@@ -10,12 +10,12 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import AuthBackgroundShape from '@/public/auth-background-shape'
-import { GoogleSignInButton } from './google-sign-in-button'
-import { LoginForm } from './login-form'
+import { GoogleButton } from '@/components/auth/google-button'
+import { LoginForm } from '@/components/auth/login-form'
 
 export async function generateMetadata(): Promise<Metadata> {
 	return {
-		title: 'Sign In — Jirah Shop',
+		title: 'Sign In',
 	}
 }
 
@@ -44,7 +44,7 @@ export default async function LoginPage({
 				<AuthBackgroundShape />
 			</div>
 
-			<Card className='z-[1] w-full border-none shadow-md sm:max-w-lg'>
+			<Card className='z-1 w-full border-none shadow-md sm:max-w-lg'>
 				<CardHeader className='gap-6'>
 					{/* Brand Logo */}
 					<Link href='/' className='inline-block'>
@@ -79,7 +79,7 @@ export default async function LoginPage({
 					)}
 
 					{/* Google OAuth */}
-					<GoogleSignInButton />
+					<GoogleButton />
 
 					<div className='flex items-center gap-4'>
 						<Separator className='flex-1' />

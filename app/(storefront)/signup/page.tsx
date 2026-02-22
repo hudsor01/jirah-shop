@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import AuthBackgroundShape from '@/public/auth-background-shape'
-import { GoogleSignUpButton } from './google-sign-up-button'
-import { SignupForm } from './signup-form'
+import { GoogleButton } from '@/components/auth/google-button'
+import { SignupForm } from '@/components/auth/signup-form'
 
 export async function generateMetadata(): Promise<Metadata> {
 	return {
@@ -61,7 +61,7 @@ export default async function SignupPage({
 					)}
 
 					{/* Google OAuth */}
-					<GoogleSignUpButton />
+					<GoogleButton />
 
 					<div className='flex items-center gap-4'>
 						<Separator className='flex-1' />

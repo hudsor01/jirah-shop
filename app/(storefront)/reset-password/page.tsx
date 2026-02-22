@@ -9,7 +9,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 import AuthBackgroundShape from '@/public/auth-background-shape'
-import { ResetPasswordForm } from './reset-password-form'
+import { ResetPasswordForm } from '@/components/auth/reset-password-form'
 
 export async function generateMetadata(): Promise<Metadata> {
 	return {
