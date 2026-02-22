@@ -29,21 +29,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
-}
-
-function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(dateString));
-}
-
 function statusVariant(
   status: OrderStatus
 ): "default" | "secondary" | "destructive" | "outline" {
@@ -85,16 +70,7 @@ export default async function AccountPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const typedOrders = (orders ?? []).map((o) => {
-    const raw = o as Record<string, unknown>;
-    return {
-      ...(raw as Order),
-      subtotal: toNum(raw.subtotal),
-      shipping_cost: toNum(raw.shipping_cost),
-      discount_amount: toNum(raw.discount_amount),
-      total: toNum(raw.total),
-    };
-  });
+  const typedOrders = (orders ?? []).map((o) => normalizeOrder(o as Record<string, unknown>));
 
   const displayName =
     user.user_metadata?.full_name ?? user.email ?? "Customer";

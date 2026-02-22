@@ -14,14 +14,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-
-function formatDate(dateString: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(dateString));
-}
+import { formatDateLong } from "@/lib/format";
 
 export async function generateMetadata({
   params,
@@ -114,7 +107,7 @@ export default async function BlogPostPage({
       {/* Published Date */}
       {post.published_at && (
         <p className="mt-4 text-sm text-muted-foreground">
-          {formatDate(post.published_at)}
+          {formatDateLong(post.published_at)}
         </p>
       )}
 

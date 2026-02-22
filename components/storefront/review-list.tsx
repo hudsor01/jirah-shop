@@ -3,14 +3,7 @@ import { ReviewStars } from "@/components/storefront/review-stars";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-function formatDate(dateString: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(dateString));
-}
+import { formatDateLong } from "@/lib/format";
 
 interface ReviewListProps {
   productId: string;
@@ -71,7 +64,7 @@ export async function ReviewList({ productId }: ReviewListProps) {
                     <ReviewStars rating={review.rating} size="sm" />
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {formatDate(review.created_at)}
+                    {formatDateLong(review.created_at)}
                   </span>
                 </div>
 

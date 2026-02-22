@@ -39,6 +39,11 @@ export type VariantFormData = {
   stock_quantity: number;
   sort_order: number;
   is_active: boolean;
+  variant_type: "size" | "color";
+  color_hex: string | null;
+  swatch_image: string | null;
+  variant_images: string[] | null;
+  description: string | null;
 };
 
 export async function getAdminProducts(options?: {
@@ -166,6 +171,11 @@ export async function createProduct(
             sort_order: v.sort_order,
             is_active: v.is_active,
             stripe_price_id: variantStripePrice.id,
+            variant_type: v.variant_type,
+            color_hex: v.color_hex,
+            swatch_image: v.swatch_image,
+            variant_images: v.variant_images,
+            description: v.description,
           };
         })
       );
@@ -290,6 +300,11 @@ export async function updateProduct(
             sort_order: v.sort_order,
             is_active: v.is_active,
             stripe_price_id: variantStripePriceId,
+            variant_type: v.variant_type,
+            color_hex: v.color_hex,
+            swatch_image: v.swatch_image,
+            variant_images: v.variant_images,
+            description: v.description,
             updated_at: new Date().toISOString(),
           })
           .eq("id", v.id);
@@ -316,6 +331,11 @@ export async function updateProduct(
           sort_order: v.sort_order,
           is_active: v.is_active,
           stripe_price_id: variantStripePriceId,
+          variant_type: v.variant_type,
+          color_hex: v.color_hex,
+          swatch_image: v.swatch_image,
+          variant_images: v.variant_images,
+          description: v.description,
         });
       }
     }

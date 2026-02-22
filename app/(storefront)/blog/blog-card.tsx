@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDateLong } from "@/lib/format";
 
 type BlogCardProps = {
   title: string;
@@ -19,14 +20,6 @@ type BlogCardProps = {
   tags: string[];
   publishedAt: string | null;
 };
-
-function formatDate(dateString: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(dateString));
-}
 
 export function BlogCard({
   title,
@@ -83,7 +76,7 @@ export function BlogCard({
       <CardFooter className="flex items-center justify-between px-5 pt-3 pb-5">
         {publishedAt && (
           <span className="text-xs text-muted-foreground">
-            {formatDate(publishedAt)}
+            {formatDateLong(publishedAt)}
           </span>
         )}
 

@@ -22,6 +22,7 @@ import {
   type BlogFormData,
 } from "@/actions/blog";
 import type { BlogPost } from "@/types/database";
+import { generateSlug } from "@/lib/slug";
 
 type BlogEditorProps = {
   post?: BlogPost;
@@ -40,13 +41,6 @@ export function BlogEditor({ post }: BlogEditorProps) {
   const [isPublished, setIsPublished] = useState(
     post?.is_published ?? false
   );
-
-  function generateSlug(value: string) {
-    return value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
 
   function handleTitleChange(value: string) {
     setTitle(value);
