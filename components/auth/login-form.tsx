@@ -8,6 +8,7 @@ import { EyeIcon, EyeOffIcon, LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { signInWithEmail, type AuthActionState } from "@/actions/auth";
 import { devSignIn } from "@/actions/dev-auth";
 
@@ -23,18 +24,15 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     initialState
   );
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [devLoggingIn, setDevLoggingIn] = useState(() => DEV_AUTO_LOGIN);
   const devAttempted = useRef(false);
   const router = useRouter();
 
-  // Dev auto-login: call server action (credentials stay server-side),
-  // then navigate to the redirect target
   useEffect(() => {
     if (!DEV_AUTO_LOGIN) return;
-
     if (devAttempted.current) return;
     devAttempted.current = true;
-
     devSignIn().then((result) => {
       if (result.success) {
         console.log(`[DevAutoLogin] Signed in as ${result.email}`);
@@ -46,7 +44,6 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     });
   }, [redirectTo, router]);
 
-  // Show a simple loading state while dev auto-login is in progress
   if (devLoggingIn) {
     return (
       <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
@@ -59,6 +56,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="redirect" value={redirectTo} />
+      <input type="hidden" name="remember" value={rememberMe ? "true" : "false"} />
 
       {state.error && (
         <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -66,7 +64,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -78,7 +76,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         />
       </div>
 
-      <div className="w-full space-y-2">
+      <div className="w-full space-y-1">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
           <Input
@@ -105,8 +103,18 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       </div>
 
-      {/* Forgot Password */}
-      <div className="flex justify-end">
+      {/* Remember Me + Forgot Password */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="remember-me"
+            checked={rememberMe}
+            onCheckedChange={(checked) => setRememberMe(checked === true)}
+          />
+          <Label htmlFor="remember-me" className="cursor-pointer font-normal">
+            Remember Me
+          </Label>
+        </div>
         <Link
           href="/forgot-password"
           className="text-sm hover:underline"

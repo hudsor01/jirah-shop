@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export function SignupForm() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -107,7 +109,22 @@ export function SignupForm() {
         </div>
       </div>
 
-      <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+      <div className="flex items-start gap-2">
+        <Checkbox
+          id="agree_terms"
+          checked={agreedToTerms}
+          onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+          className="mt-0.5"
+        />
+        <Label htmlFor="agree_terms" className="text-muted-foreground text-sm font-normal leading-snug">
+          I agree to the{" "}
+          <a href="/privacy" className="text-foreground hover:underline">privacy policy</a>
+          {" "}&amp;{" "}
+          <a href="/terms" className="text-foreground hover:underline">terms of service</a>
+        </Label>
+      </div>
+
+      <Button type="submit" className="w-full" size="lg" disabled={isPending || !agreedToTerms}>
         {isPending ? "Creating account..." : "Create Account"}
       </Button>
     </form>
