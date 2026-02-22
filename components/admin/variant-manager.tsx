@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { VariantFormData } from "@/actions/admin-products";
+import type { VariantType } from "@/types/database";
 
 type VariantManagerProps = {
   variants: VariantFormData[];
@@ -80,7 +81,7 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
               <Label className="text-xs">Type</Label>
               <Select
                 value={variant.variant_type}
-                onValueChange={(value: "size" | "color") =>
+                onValueChange={(value: VariantType) =>
                   updateVariant(index, {
                     variant_type: value,
                     // Clear color-specific fields when switching to size

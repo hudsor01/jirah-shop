@@ -6,6 +6,7 @@ import { normalizeCoupon } from "@/lib/normalize";
 import { parsePagination } from "@/lib/pagination";
 import type { Coupon, DiscountType } from "@/types/database";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export type CouponFormData = {
   code: string;
@@ -40,7 +41,7 @@ export async function getAdminCoupons(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    console.error("Error fetching coupons:", error.message);
+    logger.error("Error fetching coupons", { error: error.message });
     return { coupons: [], count: 0 };
   }
 

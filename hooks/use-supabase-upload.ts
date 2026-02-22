@@ -3,8 +3,6 @@ import { useDropzone, type FileError, type FileRejection } from 'react-dropzone'
 
 import { createClient } from '@/lib/supabase/client'
 
-const supabase = createClient()
-
 interface FileWithPreview extends File {
   preview?: string
   errors: readonly FileError[]
@@ -54,6 +52,7 @@ type UseSupabaseUploadOptions = {
 type UseSupabaseUploadReturn = ReturnType<typeof useSupabaseUpload>
 
 const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
+  const supabase = useMemo(() => createClient(), [])
   const {
     bucketName,
     path,
@@ -69,15 +68,8 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   const [errors, setErrors] = useState<{ name: string; message: string }[]>([])
   const [successes, setSuccesses] = useState<string[]>([])
 
-  const isSuccess = useMemo(() => {
-    if (errors.length === 0 && successes.length === 0) {
-      return false
-    }
-    if (errors.length === 0 && successes.length === files.length) {
-      return true
-    }
-    return false
-  }, [errors.length, successes.length, files.length])
+  const isSuccess =
+    errors.length === 0 && successes.length > 0 && successes.length === files.length
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {

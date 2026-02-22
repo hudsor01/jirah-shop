@@ -94,6 +94,7 @@ export async function submitReview(formData: FormData): Promise<{
 
 import { requireAdmin } from "@/lib/auth";
 import { parsePagination } from "@/lib/pagination";
+import { logger } from "@/lib/logger";
 
 export async function getAdminReviews(options?: {
   status?: "pending" | "approved" | "all";
@@ -121,7 +122,7 @@ export async function getAdminReviews(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    console.error("Error fetching admin reviews:", error.message);
+    logger.error("Error fetching admin reviews", { error: error.message });
     return { reviews: [], count: 0 };
   }
 
@@ -153,9 +154,11 @@ export async function rejectReview(
   await requireAdmin();
   const supabase = await createClient();
 
+  // Delete rather than update: reviews start as is_approved=false, so
+  // updating to false is a no-op. Deletion removes it from the queue permanently.
   const { error } = await supabase
     .from("product_reviews")
-    .update({ is_approved: false })
+    .delete()
     .eq("id", id);
 
   if (error) {

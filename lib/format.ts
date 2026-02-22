@@ -15,9 +15,6 @@ export function formatPrice(price: number): string {
   return priceFormatter.format(price);
 }
 
-/** Alias for formatPrice — kept for semantic clarity in order/account contexts. */
-export const formatCurrency = formatPrice;
-
 /** Format an ISO date string as "Jan 15, 2025". */
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("en-US", {

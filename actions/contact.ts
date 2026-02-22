@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 export async function submitContactForm(formData: FormData): Promise<{
   success: boolean;
@@ -29,7 +30,7 @@ export async function submitContactForm(formData: FormData): Promise<{
   });
 
   if (error) {
-    console.error("Failed to save contact submission:", error.message);
+    logger.error("Failed to save contact submission", { error: error.message });
     return { success: false, error: "Something went wrong. Please try again." };
   }
 

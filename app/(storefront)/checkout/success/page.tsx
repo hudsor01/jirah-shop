@@ -80,8 +80,8 @@ export default async function CheckoutSuccessPage({
 
 	return (
 		<section className='mx-auto max-w-2xl px-6 py-12 sm:py-20'>
-			{/* Clear cart on successful checkout */}
-			<ClearCartOnSuccess />
+			{/* Clear cart on successful checkout — idempotent via sessionStorage */}
+			<ClearCartOnSuccess sessionId={session_id} />
 
 			{/* Progress Indicator */}
 			<div className='mb-8 flex items-center justify-center gap-2'>

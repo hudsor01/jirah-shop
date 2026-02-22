@@ -48,6 +48,10 @@ export function sanitizeRedirect(target: string): string {
  * strings to prevent filter injection via `.or()` or `.ilike()`.
  */
 export function sanitizeSearchInput(input: string): string {
-  // Remove characters that have meaning in PostgREST filter strings
-  return input.replace(/[,()\\]/g, "");
+  // Remove characters that have meaning in PostgREST filter strings.
+  // Also strip } to prevent breaking array containment syntax cs.{...},
+  // and escape % / _ so they are treated as literals in ilike queries.
+  return input
+    .replace(/[,()\\}]/g, "")
+    .replace(/[%_]/g, "\\$&");
 }

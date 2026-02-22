@@ -60,6 +60,7 @@ export async function getBlogPostBySlug(slug: string): Promise<{
 import { revalidatePath } from "next/cache";
 import { parsePagination } from "@/lib/pagination";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export type BlogFormData = {
   title: string;
@@ -94,7 +95,7 @@ export async function getAdminBlogPosts(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    console.error("Error fetching blog posts:", error.message);
+    logger.error("Error fetching blog posts", { error: error.message });
     return { posts: [], count: 0 };
   }
 

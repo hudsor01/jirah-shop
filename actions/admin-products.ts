@@ -6,8 +6,9 @@ import { revalidatePath } from "next/cache";
 import { CURRENCY } from "@/lib/constants";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import { parsePagination } from "@/lib/pagination";
-import type { Product, ProductVariant, ProductCategory } from "@/types/database";
+import type { Product, ProductVariant, ProductCategory, VariantType } from "@/types/database";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export type ProductFormData = {
   name: string;
@@ -39,7 +40,7 @@ export type VariantFormData = {
   stock_quantity: number;
   sort_order: number;
   is_active: boolean;
-  variant_type: "size" | "color";
+  variant_type: VariantType;
   color_hex: string | null;
   swatch_image: string | null;
   variant_images: string[] | null;
@@ -76,7 +77,7 @@ export async function getAdminProducts(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    console.error("Error fetching admin products:", error.message);
+    logger.error("Error fetching admin products", { error: error.message });
     return { products: [], count: 0 };
   }
 
@@ -115,10 +116,10 @@ export async function createProduct(
   formData: ProductFormData,
   variants: VariantFormData[]
 ): Promise<{ success: boolean; error?: string; id?: string }> {
+  await requireAdmin();
   const supabase = await createClient();
 
   try {
-    await requireAdmin();
 
     // Create Stripe product
     const stripeProduct = await stripe.products.create({
@@ -185,7 +186,7 @@ export async function createProduct(
         .insert(variantInserts);
 
       if (variantError) {
-        console.error("Error creating variants:", variantError.message);
+        logger.error("Error creating variants", { error: variantError.message });
       }
     }
 
@@ -373,10 +374,10 @@ export async function updateProduct(
 export async function deleteProduct(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
   const supabase = await createClient();
 
   try {
-    await requireAdmin();
 
     const { data: product } = await supabase
       .from("products")

@@ -8,6 +8,7 @@ import { normalizeOrder, normalizeOrderItem } from "@/lib/normalize";
 import { parsePagination } from "@/lib/pagination";
 import type { Order, OrderItem, OrderStatus } from "@/types/database";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export type OrderWithItems = Order & {
   items: OrderItem[];
@@ -43,7 +44,7 @@ export async function getAdminOrders(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    console.error("Error fetching orders:", error.message);
+    logger.error("Error fetching orders", { error: error.message });
     return { orders: [], count: 0 };
   }
 
@@ -157,7 +158,7 @@ export async function getRecentOrders(): Promise<Order[]> {
     .limit(10);
 
   if (error) {
-    console.error("Error fetching recent orders:", error.message);
+    logger.error("Error fetching recent orders", { error: error.message });
     return [];
   }
 

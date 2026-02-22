@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import type { Product, ProductVariant } from "@/types/database";
 import { sanitizeSearchInput } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function getProducts(options?: {
   category?: string;
@@ -53,7 +54,7 @@ export async function getProducts(options?: {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching products:", error.message);
+    logger.error("Error fetching products", { error: error.message });
     return [];
   }
 
@@ -84,7 +85,7 @@ export async function getProductBySlug(
     .order("sort_order", { ascending: true });
 
   if (variantsError) {
-    console.error("Error fetching variants:", variantsError.message);
+    logger.error("Error fetching variants", { error: variantsError.message });
   }
 
   return {
@@ -105,30 +106,10 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     .limit(8);
 
   if (error) {
-    console.error("Error fetching featured products:", error.message);
+    logger.error("Error fetching featured products", { error: error.message });
     return [];
   }
 
   return (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>));
 }
 
-export async function getProductsByCategory(
-  category: string
-): Promise<Product[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .eq("category", category)
-    .order("is_featured", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching products by category:", error.message);
-    return [];
-  }
-
-  return (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>));
-}

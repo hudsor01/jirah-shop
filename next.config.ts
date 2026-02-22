@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
@@ -20,6 +21,13 @@ const nextConfig: NextConfig = {
         hostname: "cdn.shadcnstudio.com",
       },
       {
+        // Production Supabase Storage (covers <project-ref>.supabase.co)
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        // Local Supabase CLI (dev only)
         protocol: "http",
         hostname: "127.0.0.1",
         port: "54331",
@@ -61,6 +69,19 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://*.sentry.io",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' blob: data: https://images.unsplash.com https://cdn.shadcnstudio.com https://*.supabase.co",
+              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.sentry.io",
+              "frame-src https://js.stripe.com https://hooks.stripe.com",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];
@@ -72,7 +93,7 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  hideSourceMaps: true,
+  sourcemaps: { disable: false },
   disableLogger: true,
   automaticVercelMonitors: true,
 });

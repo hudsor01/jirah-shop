@@ -5,7 +5,11 @@ import { sanitizeRedirect } from "@/lib/auth";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as "email" | "recovery";
+  const rawType = searchParams.get("type");
+  const validTypes = ["email", "recovery"] as const;
+  const type = validTypes.includes(rawType as "email" | "recovery")
+    ? (rawType as "email" | "recovery")
+    : null;
   const next = sanitizeRedirect(searchParams.get("next") ?? "/");
 
   if (token_hash && type) {

@@ -17,7 +17,7 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-/** @deprecated Use `getStripe()` instead for lazy initialization. */
+/** Lazy-initialised Stripe client — initialises on first property access. */
 export const stripe = new Proxy({} as Stripe, {
   get(_target, prop, receiver) {
     return Reflect.get(getStripe(), prop, receiver);
