@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,13 @@ export function ProductDisplay({
     useState<ProductVariant | null>(initialVariant);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const addedTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimer.current) clearTimeout(addedTimer.current);
+    };
+  }, []);
 
   // ─── Derived state ────────────────────────────────────────
   const activePrice = selectedVariant?.price ?? product.price;
@@ -95,7 +102,7 @@ export function ProductDisplay({
     });
 
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+    addedTimer.current = setTimeout(() => setIsAdded(false), 2000);
   }
 
   return (

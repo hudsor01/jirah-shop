@@ -68,13 +68,18 @@ export async function submitReview(formData: FormData): Promise<{
     return { success: false, error: "Review comment must be under 5000 characters." };
   }
 
+  const { data: hasPurchased } = await supabase.rpc('has_purchased_product', {
+    p_user_id: user.id,
+    p_product_id: productId,
+  })
+
   const { error } = await supabase.from("product_reviews").insert({
     product_id: productId,
     user_id: user.id,
     rating,
     title,
     comment,
-    is_verified_purchase: false,
+    is_verified_purchase: hasPurchased ?? false,
     is_approved: false,
   });
 

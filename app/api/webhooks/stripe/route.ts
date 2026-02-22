@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
 
 /** Validate the metadata we set at checkout creation time. */
 const CheckoutMetadataSchema = z.object({
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown verification error";
-    console.error(`Webhook signature verification failed: ${message}`);
+    logger.error('Webhook signature verification failed', { error: message });
     return NextResponse.json(
       { error: "Invalid signature" },
       { status: 400 }
@@ -53,13 +54,13 @@ export async function POST(request: NextRequest) {
         break;
       }
       default: {
-        console.log(`Unhandled Stripe event type: ${event.type}`);
+        logger.info('Unhandled Stripe event type', { eventType: event.type });
       }
     }
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown handler error";
-    console.error(`Error handling ${event.type}: ${message}`);
+    logger.error('Webhook handler error', { eventType: event.type, error: message });
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
@@ -129,7 +130,7 @@ async function handleCheckoutSessionCompleted(
     .maybeSingle();
 
   if (existingOrder) {
-    console.log(`Order already exists for session ${fullSession.id}, skipping`);
+    logger.info('Order already exists, skipping', { sessionId: fullSession.id });
     return;
   }
 
@@ -168,7 +169,7 @@ async function handleCheckoutSessionCompleted(
     .single();
 
   if (orderError) {
-    console.error("Failed to create order:", orderError);
+    logger.error('Failed to create order', { error: orderError.message });
     throw new Error(`Failed to create order: ${orderError.message}`);
   }
 
@@ -207,7 +208,7 @@ async function handleCheckoutSessionCompleted(
       .insert(orderItems);
 
     if (itemsError) {
-      console.error("Failed to create order items:", itemsError);
+      logger.error('Failed to create order items', { error: itemsError.message });
       throw new Error(`Failed to create order items: ${itemsError.message}`);
     }
   }
@@ -220,11 +221,11 @@ async function handleCheckoutSessionCompleted(
 
     if (couponError) {
       // Non-fatal — log but don't fail the webhook
-      console.error("Failed to increment coupon uses:", couponError);
+      logger.error('Failed to increment coupon uses', { couponCode, error: couponError.message });
     }
   }
 
-  console.log(`Order ${order.id} created for session ${fullSession.id}`);
+  logger.info('Order created', { orderId: order.id, sessionId: fullSession.id });
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge) {
@@ -234,7 +235,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       : charge.payment_intent?.id;
 
   if (!paymentIntentId) {
-    console.warn("Charge refunded event missing payment_intent ID");
+    logger.warn('Charge refunded event missing payment_intent ID');
     return;
   }
 
@@ -246,11 +247,9 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     .eq("stripe_payment_intent_id", paymentIntentId);
 
   if (error) {
-    console.error("Failed to update order status to refunded:", error);
+    logger.error('Failed to update order to refunded', { error: error.message });
     throw new Error(`Failed to update order status: ${error.message}`);
   }
 
-  console.log(
-    `Order with payment intent ${paymentIntentId} marked as refunded`
-  );
+  logger.info('Order marked as refunded', { paymentIntentId });
 }

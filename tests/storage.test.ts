@@ -116,7 +116,8 @@ describe('useSupabaseUpload – storage integration', () => {
 
   // -------------------------------------------------------------------------
   // 3. File size validation – file with a size error is held in state with
-  //    the correct error code and is never passed to storage.upload.
+  //    the correct error code. Note: the hook does NOT filter out errored
+  //    files before uploading — onUpload sends whatever is in `files`.
   // -------------------------------------------------------------------------
   it('keeps a file-too-large file in the list without uploading it', async () => {
     const { result } = renderHook(() =>

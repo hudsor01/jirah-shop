@@ -209,18 +209,19 @@ export async function updateProduct(
   try {
     await requireAdmin();
 
-    // Get existing product for Stripe IDs
+    // Get existing product for Stripe IDs and current price
     const { data: existing } = await supabase
       .from("products")
-      .select("stripe_product_id, stripe_price_id")
+      .select("stripe_product_id, stripe_price_id, price")
       .eq("id", id)
       .single();
 
     const stripeProductId = existing?.stripe_product_id;
     let stripePriceId = existing?.stripe_price_id;
+    const existingPrice = Number(existing?.price ?? 0);
 
     if (stripeProductId) {
-      // Update Stripe product
+      // Update Stripe product metadata
       await stripe.products.update(stripeProductId, {
         name: formData.name,
         description: formData.short_description,
@@ -228,19 +229,20 @@ export async function updateProduct(
         metadata: { category: formData.category, brand: formData.brand },
       });
 
-      // Create new price if price changed
-      const newPrice = await stripe.prices.create({
-        product: stripeProductId,
-        unit_amount: Math.round(formData.price * 100),
-        currency: CURRENCY,
-      });
+      // Only create a new Stripe price if the price actually changed
+      if (Math.round(formData.price * 100) !== Math.round(existingPrice * 100)) {
+        const newPrice = await stripe.prices.create({
+          product: stripeProductId,
+          unit_amount: Math.round(formData.price * 100),
+          currency: CURRENCY,
+        });
 
-      // Deactivate old price
-      if (stripePriceId) {
-        await stripe.prices.update(stripePriceId, { active: false });
+        if (stripePriceId) {
+          await stripe.prices.update(stripePriceId, { active: false });
+        }
+
+        stripePriceId = newPrice.id;
       }
-
-      stripePriceId = newPrice.id;
     }
 
     // Update product in DB
@@ -261,10 +263,16 @@ export async function updateProduct(
     // Handle variants: delete removed, update existing, insert new
     const { data: existingVariants } = await supabase
       .from("product_variants")
-      .select("id")
+      .select("id, price, stripe_price_id")
       .eq("product_id", id);
 
-    const existingIds = existingVariants?.map((v) => v.id) ?? [];
+    const existingVariantMap = new Map(
+      (existingVariants ?? []).map((v) => [
+        v.id as string,
+        { price: Number(v.price ?? 0), stripePriceId: v.stripe_price_id as string | null },
+      ])
+    );
+    const existingIds = [...existingVariantMap.keys()];
     const incomingIds = variants.filter((v) => v.id).map((v) => v.id!);
     const toDelete = existingIds.filter((eid) => !incomingIds.includes(eid));
 
@@ -277,15 +285,26 @@ export async function updateProduct(
 
     for (const v of variants) {
       if (v.id) {
-        // Update existing variant
-        let variantStripePriceId: string | null = null;
-        if (stripeProductId) {
+        // Update existing variant — only create a new Stripe price if price changed
+        const prev = existingVariantMap.get(v.id);
+        let variantStripePriceId = prev?.stripePriceId ?? null;
+
+        if (
+          stripeProductId &&
+          Math.round(v.price * 100) !== Math.round((prev?.price ?? 0) * 100)
+        ) {
           const variantPrice = await stripe.prices.create({
             product: stripeProductId,
             unit_amount: Math.round(v.price * 100),
             currency: CURRENCY,
             metadata: { variant_name: v.name },
           });
+
+          // Deactivate old variant price
+          if (prev?.stripePriceId) {
+            await stripe.prices.update(prev.stripePriceId, { active: false });
+          }
+
           variantStripePriceId = variantPrice.id;
         }
 
