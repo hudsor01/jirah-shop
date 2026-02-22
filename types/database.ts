@@ -32,6 +32,8 @@ export type ProductCategory =
   | "body"
   | "tools";
 
+export type VariantType = "size" | "color";
+
 export type ProductVariant = {
   id: string;
   product_id: string;
@@ -43,6 +45,11 @@ export type ProductVariant = {
   stripe_price_id: string | null;
   sort_order: number;
   is_active: boolean;
+  variant_type: VariantType;
+  color_hex: string | null;
+  swatch_image: string | null;
+  variant_images: string[] | null;
+  description: string | null;
   created_at: string;
   updated_at: string;
 };

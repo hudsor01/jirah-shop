@@ -34,6 +34,7 @@ import {
   type VariantFormData,
 } from "@/actions/admin-products";
 import type { Product, ProductVariant, ProductCategory } from "@/types/database";
+import { generateSlug } from "@/lib/slug";
 
 type ProductFormProps = {
   product?: Product;
@@ -85,15 +86,13 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
       stock_quantity: v.stock_quantity,
       sort_order: v.sort_order,
       is_active: v.is_active,
+      variant_type: v.variant_type,
+      color_hex: v.color_hex,
+      swatch_image: v.swatch_image,
+      variant_images: v.variant_images,
+      description: v.description,
     }))
   );
-
-  function generateSlug(value: string) {
-    return value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
 
   function handleNameChange(value: string) {
     setName(value);
