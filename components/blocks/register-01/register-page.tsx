@@ -8,11 +8,11 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-import Logo from '@/components/shadcn-studio/logo'
-import AuthBackgroundShape from '@/public/auth-background-shape'
-import LoginForm from '@/components/shadcn-studio/blocks/login-page-01/login-form'
+import Logo from '@/components/ui/logo'
+import AuthBackgroundShape from '@/public/assets/svg/auth-background-shape'
+import RegisterForm from '@/components/blocks/register-01/register-form'
 
-const Login = () => {
+const Register = () => {
 	return (
 		<div className='relative flex h-auto min-h-dvh items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
 			<div className='absolute'>
@@ -25,7 +25,7 @@ const Login = () => {
 
 					<div>
 						<CardTitle className='mb-1.5 text-2xl'>
-							Sign in to Shadcn Studio
+							Sign Up to Shadcn studio
 						</CardTitle>
 						<CardDescription className='text-base'>
 							Ship Faster and Focus on Growth.
@@ -34,31 +34,14 @@ const Login = () => {
 				</CardHeader>
 
 				<CardContent>
-					<p className='text-muted-foreground mb-6'>
-						Login with{' '}
-						<a href='#' className='text-card-foreground hover:underline'>
-							Magic Link
-						</a>
-					</p>
-
-					{/* Quick Login Buttons */}
-					<div className='mb-6 flex flex-wrap gap-4 sm:gap-6'>
-						<Button variant='outline' className='grow'>
-							Login as User
-						</Button>
-						<Button variant='outline' className='grow'>
-							Login as Admin
-						</Button>
-					</div>
-
-					{/* Login Form */}
+					{/* Register Form */}
 					<div className='space-y-4'>
-						<LoginForm />
+						<RegisterForm />
 
 						<p className='text-muted-foreground text-center'>
-							New on our platform?{' '}
+							Already have an account?{' '}
 							<a href='#' className='text-card-foreground hover:underline'>
-								Create an account
+								Sign in instead
 							</a>
 						</p>
 
@@ -78,4 +61,4 @@ const Login = () => {
 	)
 }
 
-export default Login
+export default Register

@@ -8,11 +8,11 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 
-import Logo from '@/components/shadcn-studio/logo'
-import AuthBackgroundShape from '@/public/auth-background-shape'
-import ResetPasswordForm from '@/components/shadcn-studio/blocks/reset-password-01/reset-password-form'
+import ForgotPasswordForm from '@/components/blocks/forgot-password-01/forgot-password-form'
+import AuthBackgroundShape from '@/public/assets/svg/auth-background-shape'
+import Logo from '@/components/ui/logo'
 
-const ResetPassword = () => {
+const ForgotPassword = () => {
 	return (
 		<div className='relative flex h-auto min-h-dvh items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
 			<div className='absolute'>
@@ -24,17 +24,17 @@ const ResetPassword = () => {
 					<Logo className='gap-3' />
 
 					<div>
-						<CardTitle className='mb-1.5 text-2xl'>Reset Password</CardTitle>
+						<CardTitle className='mb-1.5 text-2xl'>Forgot Password?</CardTitle>
 						<CardDescription className='text-base'>
-							Please enter your current password and choose a new password to
-							update your account security.
+							Enter your email and we&apos;ll send you instructions to reset
+							your password
 						</CardDescription>
 					</div>
 				</CardHeader>
 
 				<CardContent className='space-y-4'>
-					{/* ResetPassword Form */}
-					<ResetPasswordForm />
+					{/* ForgotPassword Form */}
+					<ForgotPasswordForm />
 
 					<a href='#' className='group mx-auto flex w-fit items-center gap-2'>
 						<ChevronLeftIcon className='size-5 transition-transform duration-200 group-hover:-translate-x-0.5' />
@@ -46,4 +46,4 @@ const ResetPassword = () => {
 	)
 }
 
-export default ResetPassword
+export default ForgotPassword

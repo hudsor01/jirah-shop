@@ -8,9 +8,9 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-import Logo from '@/components/shadcn-studio/logo'
-import AuthBackgroundShape from '@/public/auth-background-shape'
-import LoginForm from '@/components/shadcn-studio/blocks/login-page-01/login-form'
+import Logo from '@/components/ui/logo'
+import AuthBackgroundShape from '@/public/assets/svg/auth-background-shape'
+import LoginForm from '@/components/blocks/login-page-01/login-form'
 
 const Login = () => {
 	return (

@@ -8,9 +8,9 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 
-import Logo from '@/components/shadcn-studio/logo'
-import AuthBackgroundShape from '@/public/auth-background-shape'
-import ResetPasswordForm from '@/components/shadcn-studio/blocks/reset-password-01/reset-password-form'
+import Logo from '@/components/ui/logo'
+import AuthBackgroundShape from '@/public/assets/svg/auth-background-shape'
+import ResetPasswordForm from '@/components/blocks/reset-password-01/reset-password-form'
 
 const ResetPassword = () => {
 	return (
