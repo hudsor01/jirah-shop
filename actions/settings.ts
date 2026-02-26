@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import {
@@ -9,6 +10,15 @@ import {
 } from "@/lib/constants";
 import type { ShopSettings } from "@/types/database";
 import { requireAdmin } from "@/lib/auth";
+import { uuidSchema, formatZodError } from "@/lib/validations";
+
+// ─── Zod Schemas ─────────────────────────────────────────
+
+const SettingsFormDataSchema = z.object({
+  shipping_cost: z.number().min(0, "Shipping cost cannot be negative"),
+  free_shipping_threshold: z.number().min(0, "Threshold cannot be negative"),
+  allowed_shipping_countries: z.array(z.string().length(2, "Country code must be 2 characters")).min(1, "At least one country required"),
+});
 
 // Fallback used when the DB row hasn't been seeded yet
 const DEFAULT_SETTINGS: Omit<ShopSettings, "id" | "updated_at"> = {
@@ -49,6 +59,16 @@ export async function updateShopSettings(
   formData: SettingsFormData
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid settings ID" };
+  }
+  const formParsed = SettingsFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase

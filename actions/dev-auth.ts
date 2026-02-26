@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+// No external input — reads from process.env only. No Zod validation required.
+
 /**
  * Dev-only server action that signs in with credentials stored in
  * server-side env vars (DEV_EMAIL / DEV_PASSWORD — no NEXT_PUBLIC_ prefix).

@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { normalizeCoupon } from "@/lib/normalize";
@@ -7,6 +8,25 @@ import { parsePagination } from "@/lib/pagination";
 import type { Coupon, DiscountType } from "@/types/database";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+
+// ─── Zod Schemas ─────────────────────────────────────────
+
+const CouponFormDataSchema = z.object({
+  code: z.string().min(1, "Coupon code is required").max(50),
+  discount_type: z.enum(["percentage", "fixed_amount"]),
+  discount_value: z.number().positive("Discount value must be positive"),
+  min_order_amount: z.number().min(0).nullable(),
+  max_uses: z.number().int().positive().nullable(),
+  is_active: z.boolean(),
+  expires_at: z.string().nullable(),
+});
+
+const AdminCouponsOptionsSchema = paginationSchema.extend({
+  search: z.string().optional(),
+});
+
+// ─── Actions ─────────────────────────────────────────────
 
 export type CouponFormData = {
   code: string;
@@ -24,6 +44,12 @@ export async function getAdminCoupons(options?: {
   limit?: number;
 }): Promise<{ coupons: Coupon[]; count: number }> {
   await requireAdmin();
+
+  const optionsParsed = AdminCouponsOptionsSchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return { coupons: [], count: 0 };
+  }
+
   const supabase = await createClient();
   const { from, to } = parsePagination(options);
 
@@ -52,6 +78,12 @@ export async function createCoupon(
   formData: CouponFormData
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const formParsed = CouponFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("coupons").insert({
@@ -73,6 +105,16 @@ export async function updateCoupon(
   formData: CouponFormData
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid coupon ID" };
+  }
+  const formParsed = CouponFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -96,6 +138,12 @@ export async function deleteCoupon(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid coupon ID" };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("coupons").delete().eq("id", id);

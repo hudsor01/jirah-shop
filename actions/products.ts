@@ -1,10 +1,22 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import type { Product, ProductVariant } from "@/types/database";
 import { sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+
+// ─── Zod Schemas ─────────────────────────────────────────
+
+const ProductQuerySchema = z.object({
+  category: z.string().optional(),
+  search: z.string().optional(),
+  sort: z.string().optional(),
+  limit: z.number().int().positive().optional(),
+});
+
+// ─── Actions ─────────────────────────────────────────────
 
 export async function getProducts(options?: {
   category?: string;
@@ -12,6 +24,11 @@ export async function getProducts(options?: {
   sort?: string;
   limit?: number;
 }): Promise<Product[]> {
+  const optionsParsed = ProductQuerySchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return [];
+  }
+
   const supabase = await createClient();
 
   let query = supabase
@@ -64,6 +81,11 @@ export async function getProducts(options?: {
 export async function getProductBySlug(
   slug: string
 ): Promise<{ product: Product; variants: ProductVariant[] } | null> {
+  const slugParsed = z.string().min(1).safeParse(slug);
+  if (!slugParsed.success) {
+    return null;
+  }
+
   const supabase = await createClient();
 
   const { data: product, error: productError } = await supabase
