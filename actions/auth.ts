@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { SITE_URL } from "@/lib/constants";
 import { sanitizeRedirect } from "@/lib/auth";
 import { emailSchema, passwordSchema, formatZodError } from "@/lib/validations";
+import { authLimiter } from "@/lib/rate-limit";
 
 export type AuthActionState = {
   error: string | null;
@@ -31,6 +32,11 @@ export async function signInWithEmail(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  const rateCheck = await authLimiter.check();
+  if (!rateCheck.success) {
+    return { error: "Too many requests, please try again later." };
+  }
+
   const raw = {
     email: (formData.get("email") as string)?.trim(),
     password: formData.get("password") as string,
@@ -61,6 +67,11 @@ export async function signUpWithEmail(
   _prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  const rateCheck = await authLimiter.check();
+  if (!rateCheck.success) {
+    return { error: "Too many requests, please try again later." };
+  }
+
   const raw = {
     full_name: (formData.get("full_name") as string)?.trim(),
     email: (formData.get("email") as string)?.trim(),

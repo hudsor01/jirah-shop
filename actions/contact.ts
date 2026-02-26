@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import { emailSchema, formatZodError } from "@/lib/validations";
+import { contactLimiter } from "@/lib/rate-limit";
 
 const ContactFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -16,6 +17,11 @@ export async function submitContactForm(formData: FormData): Promise<{
   success: boolean;
   error?: string;
 }> {
+  const rateCheck = await contactLimiter.check();
+  if (!rateCheck.success) {
+    return { success: false, error: "Too many requests, please try again later." };
+  }
+
   const raw = {
     name: (formData.get("name") as string)?.trim(),
     email: (formData.get("email") as string)?.trim(),
