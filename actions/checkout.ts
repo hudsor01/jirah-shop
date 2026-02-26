@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
@@ -8,21 +9,39 @@ import { toNum } from "@/lib/utils";
 import type { CartItem } from "@/types/database";
 import { CURRENCY, SITE_URL } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import { formatZodError } from "@/lib/validations";
+
+const CartItemSchema = z.object({
+  product_id: z.string().min(1, "Product ID is required"),
+  variant_id: z.string().nullable().optional(),
+  name: z.string().min(1),
+  variant_name: z.string().nullable().optional(),
+  price: z.number().positive("Price must be positive"),
+  quantity: z.number().int().positive("Quantity must be at least 1"),
+  image: z.string().nullable().optional(),
+});
+
+const CreateCheckoutSchema = z.object({
+  items: z.array(CartItemSchema).min(1, "Cart is empty"),
+  couponCode: z.string().nullable().optional(),
+});
 
 export async function createCheckoutSession(
   items: CartItem[],
   couponCode?: string | null
 ) {
-  if (!items.length) {
-    throw new Error("Cart is empty");
+  const parsed = CreateCheckoutSchema.safeParse({ items, couponCode });
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error));
   }
+  const validatedInput = parsed.data;
 
   // ── Server-side price validation ──────────────────────────
   // Never trust client-supplied prices. Look up authoritative prices from DB.
   const supabase = await createClient();
 
-  const productIds = [...new Set(items.map((i) => i.product_id))];
-  const variantIds = items
+  const productIds = [...new Set(validatedInput.items.map((i) => i.product_id))];
+  const variantIds = validatedInput.items
     .map((i) => i.variant_id)
     .filter((id): id is string => !!id);
 
@@ -43,7 +62,7 @@ export async function createCheckoutSession(
   const variantMap = new Map(dbVariants?.map((v) => [v.id, v]) ?? []);
 
   // Validate and replace client prices with DB prices
-  const validatedItems = items.map((item) => {
+  const validatedItems = validatedInput.items.map((item) => {
     const product = productMap.get(item.product_id);
     if (!product || !product.is_active) {
       throw new Error("Item is currently unavailable");
@@ -91,8 +110,8 @@ export async function createCheckoutSession(
   // Validate coupon and compute discount amount
   let discountAmount = 0;
 
-  if (couponCode) {
-    const trimmedCode = couponCode.trim().toUpperCase();
+  if (validatedInput.couponCode) {
+    const trimmedCode = validatedInput.couponCode.trim().toUpperCase();
     const { data: coupon } = await supabase
       .from("coupons")
       .select("*")
@@ -187,7 +206,7 @@ export async function createCheckoutSession(
       allowed_countries: allowed_shipping_countries as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
     },
     metadata: {
-      coupon_code: couponCode || "",
+      coupon_code: validatedInput.couponCode || "",
       // Store authoritative discount and original subtotal so the webhook
       // can record correct order totals independently of Stripe rounding.
       discount_amount: discountAmount.toFixed(2),
