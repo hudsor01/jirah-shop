@@ -13,7 +13,11 @@ export async function devSignIn(): Promise<{
   error?: string;
 }> {
   if (process.env.NODE_ENV !== "development") {
-    throw new Error("devSignIn is not available outside of development");
+    return { error: "devSignIn is not available outside of development" };
+  }
+
+  if (process.env.ALLOW_DEV_AUTH !== "true") {
+    return { error: "devSignIn requires ALLOW_DEV_AUTH=true in environment" };
   }
 
   const email = process.env.DEV_EMAIL;

@@ -15,6 +15,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { formatDateLong } from "@/lib/format";
+import { sanitizeRichHTML } from "@/lib/sanitize";
 
 export async function generateMetadata({
   params,
@@ -131,7 +132,7 @@ export default async function BlogPostPage({
           [&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm
           [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:my-6
           [&_hr]:border-border [&_hr]:my-8"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeRichHTML(post.content) }}
       />
 
       <Separator className="my-8" />

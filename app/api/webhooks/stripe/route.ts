@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
 /** Validate the metadata we set at checkout creation time. */
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
     const message =

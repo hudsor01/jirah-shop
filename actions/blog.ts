@@ -61,6 +61,7 @@ import { revalidatePath } from "next/cache";
 import { parsePagination } from "@/lib/pagination";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { sanitizeRichHTML } from "@/lib/sanitize";
 
 export type BlogFormData = {
   title: string;
@@ -127,10 +128,13 @@ export async function createBlogPost(
   await requireAdmin();
   const supabase = await createClient();
 
+  const sanitizedContent = sanitizeRichHTML(formData.content);
+
   const { data, error } = await supabase
     .from("blog_posts")
     .insert({
       ...formData,
+      content: sanitizedContent,
       published_at: formData.is_published ? new Date().toISOString() : null,
     })
     .select()
@@ -165,10 +169,13 @@ export async function updateBlogPost(
       ? new Date().toISOString()
       : undefined;
 
+  const sanitizedContent = sanitizeRichHTML(formData.content);
+
   const { error } = await supabase
     .from("blog_posts")
     .update({
       ...formData,
+      content: sanitizedContent,
       ...(publishedAt ? { published_at: publishedAt } : {}),
       updated_at: new Date().toISOString(),
     })

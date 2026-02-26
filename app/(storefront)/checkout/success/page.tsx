@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { stripe } from '@/lib/stripe'
+import { createClient } from '@/lib/supabase/server'
 import { ClearCartOnSuccess } from './clear-cart'
 
 export const metadata: Metadata = {
@@ -72,6 +73,38 @@ export default async function CheckoutSuccessPage({
 				</Button>
 			</section>
 		)
+	}
+
+	// ── Session Ownership Check (SEC-07: prevent IDOR) ──
+	// If user is authenticated, verify their email matches the checkout session.
+	// Guest checkout (no auth) is allowed — we only block logged-in users
+	// from viewing someone else's order.
+	const supabase = await createClient()
+	const {
+		data: { user },
+	} = await supabase.auth.getUser()
+
+	if (user && session.customer_details?.email) {
+		if (user.email !== session.customer_details.email) {
+			// Logged-in user trying to view someone else's order
+			return (
+				<section className='mx-auto flex max-w-lg flex-col items-center gap-6 px-6 py-20 text-center'>
+					<h1 className='font-serif text-2xl font-bold text-foreground'>
+						Order Not Found
+					</h1>
+					<p className='text-muted-foreground'>
+						We couldn&apos;t retrieve your order details. Please check your email
+						for the receipt.
+					</p>
+					<Button asChild>
+						<Link href='/shop'>
+							Continue Shopping
+							<ArrowRight className='ml-1.5 size-4' />
+						</Link>
+					</Button>
+				</section>
+			)
+		}
 	}
 
 	const lineItems = session.line_items?.data ?? []

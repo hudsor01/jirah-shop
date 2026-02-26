@@ -205,10 +205,10 @@ export async function updateProduct(
   formData: ProductFormData,
   variants: VariantFormData[]
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
   const supabase = await createClient();
 
   try {
-    await requireAdmin();
 
     // Get existing product for Stripe IDs and current price
     const { data: existing } = await supabase

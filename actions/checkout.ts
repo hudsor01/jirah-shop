@@ -7,6 +7,7 @@ import { getShopSettings } from "@/actions/settings";
 import { toNum } from "@/lib/utils";
 import type { CartItem } from "@/types/database";
 import { CURRENCY, SITE_URL } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export async function createCheckoutSession(
   items: CartItem[],
@@ -45,7 +46,7 @@ export async function createCheckoutSession(
   const validatedItems = items.map((item) => {
     const product = productMap.get(item.product_id);
     if (!product || !product.is_active) {
-      throw new Error(`Product "${item.name}" is no longer available.`);
+      throw new Error("Item is currently unavailable");
     }
 
     let serverPrice: number;
@@ -54,7 +55,7 @@ export async function createCheckoutSession(
     if (item.variant_id) {
       const variant = variantMap.get(item.variant_id);
       if (!variant || !variant.is_active) {
-        throw new Error(`Variant for "${item.name}" is no longer available.`);
+        throw new Error("Item is currently unavailable");
       }
       serverPrice = Number(variant.price);
       availableStock = Number(variant.stock_quantity);
@@ -64,9 +65,13 @@ export async function createCheckoutSession(
     }
 
     if (item.quantity > availableStock) {
-      throw new Error(
-        `Only ${availableStock} units of "${item.name}" are available.`
-      );
+      logger.warn("Insufficient stock for checkout item", {
+        productId: item.product_id,
+        variantId: item.variant_id || undefined,
+        requested: item.quantity,
+        available: availableStock,
+      });
+      throw new Error("Item is currently unavailable");
     }
 
     return { ...item, price: serverPrice };
@@ -96,26 +101,37 @@ export async function createCheckoutSession(
       .single();
 
     if (!coupon) {
-      throw new Error(`Coupon code "${trimmedCode}" is not valid.`);
+      logger.warn("Coupon validation failed: not found", { code: trimmedCode });
+      throw new Error("Coupon is not valid");
     }
 
     if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      throw new Error(`Coupon code "${trimmedCode}" has expired.`);
+      logger.warn("Coupon validation failed: expired", {
+        code: trimmedCode,
+        expiresAt: coupon.expires_at,
+      });
+      throw new Error("Coupon is not valid");
     }
 
     const maxUses = toNum(coupon.max_uses);
     const currentUses = toNum(coupon.current_uses);
     if (coupon.max_uses !== null && currentUses >= maxUses) {
-      throw new Error(
-        `Coupon code "${trimmedCode}" has reached its maximum uses.`
-      );
+      logger.warn("Coupon validation failed: max uses reached", {
+        code: trimmedCode,
+        maxUses,
+        currentUses,
+      });
+      throw new Error("Coupon is not valid");
     }
 
     const minOrderAmount = coupon.min_order_amount != null ? toNum(coupon.min_order_amount) : null;
     if (minOrderAmount !== null && subtotal < minOrderAmount) {
-      throw new Error(
-        `Coupon code "${trimmedCode}" requires a minimum order of $${minOrderAmount.toFixed(2)}.`
-      );
+      logger.warn("Coupon validation failed: minimum order not met", {
+        code: trimmedCode,
+        minOrderAmount,
+        subtotal,
+      });
+      throw new Error("Coupon is not valid");
     }
 
     const discountValue = toNum(coupon.discount_value);

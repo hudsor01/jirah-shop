@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CATEGORIES } from "@/lib/constants";
 import { ProductDisplay } from "./product-display";
+import { sanitizeRichHTML } from "@/lib/sanitize";
 
 export async function generateMetadata({
   params,
@@ -106,7 +107,7 @@ export default async function ProductDetailPage({
             {/* Admin-authored HTML content — not user-generated input */}
             <div
               className="prose prose-sm max-w-none leading-relaxed text-muted-foreground [&_h2]:font-serif [&_h2]:text-foreground [&_h3]:font-serif [&_h3]:text-foreground [&_strong]:text-foreground"
-              dangerouslySetInnerHTML={{ __html: product.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHTML(product.description) }}
             />
           </TabsContent>
 
