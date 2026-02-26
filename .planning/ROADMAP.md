@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Critical Security Fixes** - Eliminate XSS, auth bypass, IDOR, and information leakage vulnerabilities
 - [ ] **Phase 2: Inventory & Data Integrity** - Atomic stock management and partial failure rollback
-- [ ] **Phase 3: Input Validation & Security Hardening** - Zod schemas on all server actions, rate limiting, password policy
+- [x] **Phase 3: Input Validation & Security Hardening** - Zod schemas on all server actions, rate limiting, password policy
 - [ ] **Phase 4: Database Performance** - Postgres RPCs for aggregations, pagination on all listing endpoints
 - [ ] **Phase 5: Application Performance** - Next.js 16 caching, request deduplication, parallelization, singletons
 - [ ] **Phase 6: Error Handling & Data Access** - ActionResult adoption, queries layer extraction, code quality fixes
@@ -68,9 +68,9 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Zod schemas for checkout and admin-products actions
-- [ ] 03-02: Zod schemas for remaining 9 action files
-- [ ] 03-03: Password policy, contact validation, rate limiting
+- [x] 03-01: Zod schemas for checkout and admin-products actions
+- [x] 03-02: Zod schemas for remaining 9 action files
+- [x] 03-03: Password policy, contact validation, rate limiting
 
 ### Phase 4: Database Performance
 **Goal**: All database queries that degrade at scale are replaced with efficient server-side operations
@@ -206,7 +206,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 1. Critical Security Fixes | 3/3 | Complete | 2026-02-26 |
 | 2. Inventory & Data Integrity | 2/2 | Complete | 2026-02-26 |
-| 3. Input Validation & Security Hardening | 0/3 | Not started | - |
+| 3. Input Validation & Security Hardening | 3/3 | Complete | 2026-02-26 |
 | 4. Database Performance | 0/3 | Not started | - |
 | 5. Application Performance | 0/3 | Not started | - |
 | 6. Error Handling & Data Access | 0/4 | Not started | - |
