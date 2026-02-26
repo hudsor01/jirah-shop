@@ -119,6 +119,10 @@ export async function createProduct(
   await requireAdmin();
   const supabase = await createClient();
 
+  // Track created resources for rollback cleanup
+  let stripeProductId: string | null = null;
+  let dbProductId: string | null = null;
+
   try {
 
     // Create Stripe product
@@ -128,6 +132,7 @@ export async function createProduct(
       images: formData.images.slice(0, 8),
       metadata: { category: formData.category, brand: formData.brand },
     });
+    stripeProductId = stripeProduct.id;
 
     // Create Stripe price
     const stripePrice = await stripe.prices.create({
@@ -148,8 +153,9 @@ export async function createProduct(
       .single();
 
     if (error) {
-      return { success: false, error: error.message };
+      throw new Error(error.message);
     }
+    dbProductId = product.id;
 
     // Insert variants
     if (variants.length > 0 && product) {
@@ -186,7 +192,7 @@ export async function createProduct(
         .insert(variantInserts);
 
       if (variantError) {
-        logger.error("Error creating variants", { error: variantError.message });
+        throw new Error(`Variant creation failed: ${variantError.message}`);
       }
     }
 
@@ -195,6 +201,30 @@ export async function createProduct(
 
     return { success: true, id: product.id };
   } catch (err) {
+    // Cleanup in reverse order of creation
+    if (dbProductId) {
+      const { error: cleanupDbError } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", dbProductId);
+      logger.error("createProduct rollback: deleted Supabase product", {
+        dbProductId,
+        cleanupSuccess: !cleanupDbError,
+      });
+    }
+    if (stripeProductId) {
+      try {
+        await stripe.products.update(stripeProductId, { active: false });
+        logger.error("createProduct rollback: archived Stripe product", {
+          stripeProductId,
+        });
+      } catch (stripeCleanupErr) {
+        logger.error("createProduct rollback: failed to archive Stripe product", {
+          stripeProductId,
+          error: stripeCleanupErr instanceof Error ? stripeCleanupErr.message : "Unknown",
+        });
+      }
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return { success: false, error: message };
   }
