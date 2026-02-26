@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Customers can browse products, add to cart, and complete checkout with Stripe payments -- the purchase flow must always work correctly and securely.
-**Current focus:** Phase 1: Critical Security Fixes -- COMPLETE
+**Current focus:** Phase 2: Inventory & Data Integrity -- COMPLETE
 
 ## Current Position
 
-Phase: 1 of 10 (Critical Security Fixes)
-Plan: 3 of 3 in current phase (ALL COMPLETE)
+Phase: 2 of 10 (Inventory & Data Integrity)
+Plan: 2 of 2 in current phase (ALL COMPLETE)
 Status: Phase complete
-Last activity: 2026-02-26 -- Executed all 3 plans for Phase 1 critical security fixes
+Last activity: 2026-02-26 -- Executed all 2 plans for Phase 2 inventory & data integrity
 
-Progress: [██████████] 100% (Phase 1)
+Progress: [██████████] 100% (Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 5
 - Average duration: ~5 min per plan
-- Total execution time: ~15 minutes
+- Total execution time: ~28 minutes
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 - Critical Security Fixes | 3/3 | ~15 min | ~5 min |
+| 2 - Inventory & Data Integrity | 2/2 | ~13 min | ~6.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02, 01-03
-- Trend: Fast (straightforward security patches)
+- Last 5 plans: 01-01, 01-02, 01-03, 02-01, 02-02
+- Trend: Fast (focused changes with clear patterns)
 
 *Updated after each plan completion*
 
@@ -48,6 +49,9 @@ Recent decisions affecting current work:
 - [Phase 1]: isomorphic-dompurify chosen for XSS sanitization (SSR-compatible)
 - [Phase 1]: All coupon errors collapsed to single "Coupon is not valid" message
 - [Phase 1]: Checkout success IDOR fix uses email comparison (guest checkout preserved)
+- [Phase 2]: SECURITY DEFINER on decrement_stock RPC (matches increment_coupon_uses convention)
+- [Phase 2]: Stripe products archived (active: false) not deleted -- deletion fails when prices exist
+- [Phase 2]: Failed stock decrement logs error but continues processing remaining items
 
 ### Pending Todos
 
@@ -55,11 +59,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Stock decrement RPC (Phase 2) requires Supabase SQL migration -- managed outside this codebase per constraints, but RPC must be created
+- Stock decrement RPC migration (`supabase/migrations/00009_decrement_stock_rpc.sql`) must be applied to production Supabase database
 - Rate limiting (Phase 3) needs infrastructure decision: @upstash/ratelimit vs Vercel built-in vs other
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 1 complete, ready to plan Phase 2
+Stopped at: Phase 2 complete, ready to plan Phase 3
 Resume file: None
