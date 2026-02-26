@@ -1,7 +1,32 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogPost } from "@/types/database";
+import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+
+// ─── Zod Schemas ─────────────────────────────────────────
+
+const BlogQuerySchema = z.object({
+  tag: z.string().optional(),
+  limit: z.number().int().positive().optional(),
+});
+
+const BlogFormDataSchema = z.object({
+  title: z.string().min(1, "Title is required").max(300),
+  slug: z.string().min(1, "Slug is required").max(300),
+  content: z.string().min(1, "Content is required"),
+  excerpt: z.string().max(1000),
+  cover_image: z.string().url().nullable(),
+  tags: z.array(z.string()),
+  is_published: z.boolean(),
+});
+
+const AdminBlogOptionsSchema = paginationSchema.extend({
+  search: z.string().optional(),
+});
+
+// ─── Storefront ──────────────────────────────────────────
 
 export async function getBlogPosts(options?: {
   tag?: string;
@@ -10,6 +35,11 @@ export async function getBlogPosts(options?: {
   data: BlogPost[];
   error: string | null;
 }> {
+  const optionsParsed = BlogQuerySchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return { data: [], error: "Invalid query parameters" };
+  }
+
   const supabase = await createClient();
 
   let query = supabase
@@ -39,6 +69,11 @@ export async function getBlogPostBySlug(slug: string): Promise<{
   data: BlogPost | null;
   error: string | null;
 }> {
+  const slugParsed = z.string().min(1).safeParse(slug);
+  if (!slugParsed.success) {
+    return { data: null, error: "Invalid slug" };
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -79,6 +114,12 @@ export async function getAdminBlogPosts(options?: {
   limit?: number;
 }): Promise<{ posts: BlogPost[]; count: number }> {
   await requireAdmin();
+
+  const optionsParsed = AdminBlogOptionsSchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return { posts: [], count: 0 };
+  }
+
   const supabase = await createClient();
   const { from, to } = parsePagination(options);
 
@@ -107,6 +148,12 @@ export async function getAdminBlogPost(
   id: string
 ): Promise<BlogPost | null> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return null;
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -126,6 +173,12 @@ export async function createBlogPost(
   formData: BlogFormData
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   await requireAdmin();
+
+  const formParsed = BlogFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+
   const supabase = await createClient();
 
   const sanitizedContent = sanitizeRichHTML(formData.content);
@@ -155,6 +208,16 @@ export async function updateBlogPost(
   formData: BlogFormData
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid blog post ID" };
+  }
+  const formParsed = BlogFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+
   const supabase = await createClient();
 
   // Get existing to check if newly published
@@ -196,6 +259,12 @@ export async function deleteBlogPost(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid blog post ID" };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("blog_posts").delete().eq("id", id);
