@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { revalidatePath } from "next/cache";
@@ -9,6 +10,7 @@ import { parsePagination } from "@/lib/pagination";
 import type { Product, ProductVariant, ProductCategory, VariantType } from "@/types/database";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
 
 export type ProductFormData = {
   name: string;
@@ -47,6 +49,52 @@ export type VariantFormData = {
   description: string | null;
 };
 
+// ─── Zod Schemas ────────────────────────────────────────
+
+const ProductFormDataSchema = z.object({
+  name: z.string().min(1, "Product name is required").max(200),
+  slug: z.string().min(1, "Slug is required").max(200),
+  description: z.string(),
+  short_description: z.string().max(500),
+  price: z.number().positive("Price must be positive"),
+  compare_at_price: z.number().positive().nullable(),
+  category: z.string().min(1, "Category is required"),
+  subcategory: z.string().nullable(),
+  brand: z.string().min(1, "Brand is required"),
+  is_own_brand: z.boolean(),
+  images: z.array(z.string().url()).max(8, "Maximum 8 images"),
+  ingredients: z.string().nullable(),
+  how_to_use: z.string().nullable(),
+  tags: z.array(z.string()),
+  stock_quantity: z.number().int().min(0, "Stock cannot be negative"),
+  has_variants: z.boolean(),
+  is_featured: z.boolean(),
+  is_active: z.boolean(),
+});
+
+const VariantFormDataSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Variant name is required"),
+  sku: z.string().min(1, "SKU is required"),
+  price: z.number().positive("Price must be positive"),
+  compare_at_price: z.number().positive().nullable(),
+  stock_quantity: z.number().int().min(0, "Stock cannot be negative"),
+  sort_order: z.number().int().min(0),
+  is_active: z.boolean(),
+  variant_type: z.string().min(1),
+  color_hex: z.string().nullable(),
+  swatch_image: z.string().nullable(),
+  variant_images: z.array(z.string()).nullable(),
+  description: z.string().nullable(),
+});
+
+const AdminProductsOptionsSchema = paginationSchema.extend({
+  search: z.string().optional(),
+  category: z.string().optional(),
+});
+
+// ─── Actions ────────────────────────────────────────────
+
 export async function getAdminProducts(options?: {
   search?: string;
   category?: string;
@@ -54,6 +102,12 @@ export async function getAdminProducts(options?: {
   limit?: number;
 }): Promise<{ products: Product[]; count: number }> {
   await requireAdmin();
+
+  const optionsParsed = AdminProductsOptionsSchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return { products: [], count: 0 };
+  }
+
   const supabase = await createClient();
   const { from, to } = parsePagination(options);
 
@@ -88,6 +142,12 @@ export async function getAdminProduct(
   id: string
 ): Promise<{ product: Product; variants: ProductVariant[] } | null> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return null;
+  }
+
   const supabase = await createClient();
 
   const { data: product, error } = await supabase
@@ -117,6 +177,16 @@ export async function createProduct(
   variants: VariantFormData[]
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   await requireAdmin();
+
+  const formParsed = ProductFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+  const variantsParsed = z.array(VariantFormDataSchema).safeParse(variants);
+  if (!variantsParsed.success) {
+    return { success: false, error: formatZodError(variantsParsed.error) };
+  }
+
   const supabase = await createClient();
 
   // Track created resources for rollback cleanup
@@ -236,6 +306,20 @@ export async function updateProduct(
   variants: VariantFormData[]
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid product ID" };
+  }
+  const formParsed = ProductFormDataSchema.safeParse(formData);
+  if (!formParsed.success) {
+    return { success: false, error: formatZodError(formParsed.error) };
+  }
+  const variantsParsed = z.array(VariantFormDataSchema).safeParse(variants);
+  if (!variantsParsed.success) {
+    return { success: false, error: formatZodError(variantsParsed.error) };
+  }
+
   const supabase = await createClient();
 
   try {
@@ -405,6 +489,12 @@ export async function deleteProduct(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   await requireAdmin();
+
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) {
+    return { success: false, error: "Invalid product ID" };
+  }
+
   const supabase = await createClient();
 
   try {
