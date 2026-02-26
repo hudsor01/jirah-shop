@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { webhookLimiter } from "@/lib/rate-limit";
 
 /** Validate the metadata we set at checkout creation time. */
 const CheckoutMetadataSchema = z.object({
@@ -21,6 +22,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Missing stripe-signature header" },
       { status: 400 }
+    );
+  }
+
+  const webhookRate = await webhookLimiter.check();
+  if (!webhookRate.success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
     );
   }
 

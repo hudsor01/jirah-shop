@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ProductReview } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+import { reviewLimiter } from "@/lib/rate-limit";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -52,6 +53,11 @@ export async function submitReview(formData: FormData): Promise<{
   success: boolean;
   error: string | null;
 }> {
+  const rateCheck = await reviewLimiter.check();
+  if (!rateCheck.success) {
+    return { success: false, error: "Too many requests, please try again later." };
+  }
+
   const supabase = await createClient();
 
   const {
