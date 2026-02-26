@@ -214,6 +214,32 @@ async function handleCheckoutSessionCompleted(
     }
   }
 
+  // ── Stock decrement (atomic RPC per line item) ──
+  for (const item of orderItems) {
+    const { data: rowsUpdated, error: stockError } = await supabase.rpc(
+      "decrement_stock",
+      {
+        p_product_id: item.product_id,
+        p_variant_id: item.variant_id,
+        p_quantity: item.quantity,
+      }
+    );
+
+    if (stockError || rowsUpdated === 0) {
+      logger.error(
+        "Stock decrement failed — insufficient stock after checkout",
+        {
+          orderId: order.id,
+          productId: item.product_id,
+          variantId: item.variant_id || undefined,
+          requestedQuantity: item.quantity,
+          rpcError: stockError?.message,
+        }
+      );
+      // Continue processing remaining items (partial fulfillment logging, not rollback)
+    }
+  }
+
   // Increment coupon uses atomically to prevent race conditions
   if (couponCode) {
     const { error: couponError } = await supabase.rpc("increment_coupon_uses", {
