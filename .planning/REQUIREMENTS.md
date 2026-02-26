@@ -163,13 +163,102 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(Populated by roadmapper)* | | |
+| SEC-01 | Phase 1: Critical Security Fixes | Pending |
+| SEC-02 | Phase 1: Critical Security Fixes | Pending |
+| SEC-03 | Phase 1: Critical Security Fixes | Pending |
+| SEC-04 | Phase 1: Critical Security Fixes | Pending |
+| SEC-05 | Phase 1: Critical Security Fixes | Pending |
+| SEC-06 | Phase 3: Input Validation & Security Hardening | Pending |
+| SEC-07 | Phase 1: Critical Security Fixes | Pending |
+| SEC-08 | Phase 3: Input Validation & Security Hardening | Pending |
+| SEC-09 | Phase 3: Input Validation & Security Hardening | Pending |
+| SEC-10 | Phase 3: Input Validation & Security Hardening | Pending |
+| SEC-11 | Phase 1: Critical Security Fixes | Pending |
+| SEC-12 | Phase 1: Critical Security Fixes | Pending |
+| INV-01 | Phase 2: Inventory & Data Integrity | Pending |
+| INV-02 | Phase 2: Inventory & Data Integrity | Pending |
+| INV-03 | Phase 2: Inventory & Data Integrity | Pending |
+| INV-04 | Phase 2: Inventory & Data Integrity | Pending |
+| PERF-01 | Phase 4: Database Performance | Pending |
+| PERF-02 | Phase 4: Database Performance | Pending |
+| PERF-03 | Phase 4: Database Performance | Pending |
+| PERF-04 | Phase 4: Database Performance | Pending |
+| PERF-05 | Phase 4: Database Performance | Pending |
+| PERF-06 | Phase 4: Database Performance | Pending |
+| PERF-07 | Phase 4: Database Performance | Pending |
+| PERF-08 | Phase 5: Application Performance | Pending |
+| PERF-09 | Phase 5: Application Performance | Pending |
+| PERF-10 | Phase 5: Application Performance | Pending |
+| PERF-11 | Phase 5: Application Performance | Pending |
+| PERF-12 | Phase 5: Application Performance | Pending |
+| PERF-13 | Phase 5: Application Performance | Pending |
+| PERF-14 | Phase 5: Application Performance | Pending |
+| PERF-15 | Phase 5: Application Performance | Pending |
+| PERF-16 | Phase 5: Application Performance | Pending |
+| PERF-17 | Phase 5: Application Performance | Pending |
+| CQ-01 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-02 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-03 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-04 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-05 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-06 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-07 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-08 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-09 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-10 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-11 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-12 | Phase 6: Error Handling & Data Access | Pending |
+| CQ-13 | Phase 6: Error Handling & Data Access | Pending |
+| FW-01 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-02 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-03 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-04 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-05 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-06 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-07 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-08 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-09 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-10 | Phase 10: Framework & Architecture Cleanup | Pending |
+| FW-11 | Phase 10: Framework & Architecture Cleanup | Pending |
+| TEST-01 | Phase 7: Testing Foundation | Pending |
+| TEST-02 | Phase 7: Testing Foundation | Pending |
+| TEST-03 | Phase 7: Testing Foundation | Pending |
+| TEST-04 | Phase 7: Testing Foundation | Pending |
+| TEST-05 | Phase 7: Testing Foundation | Pending |
+| TEST-06 | Phase 7: Testing Foundation | Pending |
+| TEST-07 | Phase 7: Testing Foundation | Pending |
+| TEST-08 | Phase 7: Testing Foundation | Pending |
+| TEST-09 | Phase 7: Testing Foundation | Pending |
+| TEST-10 | Phase 7: Testing Foundation | Pending |
+| TEST-11 | Phase 7: Testing Foundation | Pending |
+| TEST-12 | Phase 7: Testing Foundation | Pending |
+| DOC-01 | Phase 8: Documentation | Pending |
+| DOC-02 | Phase 8: Documentation | Pending |
+| DOC-03 | Phase 8: Documentation | Pending |
+| DOC-04 | Phase 8: Documentation | Pending |
+| DOC-05 | Phase 8: Documentation | Pending |
+| DOC-06 | Phase 8: Documentation | Pending |
+| DOC-07 | Phase 8: Documentation | Pending |
+| OPS-01 | Phase 9: CI/CD & Operations | Pending |
+| OPS-02 | Phase 9: CI/CD & Operations | Pending |
+| OPS-03 | Phase 9: CI/CD & Operations | Pending |
+| OPS-04 | Phase 9: CI/CD & Operations | Pending |
+| OPS-05 | Phase 9: CI/CD & Operations | Pending |
+| OPS-06 | Phase 9: CI/CD & Operations | Pending |
+| OPS-07 | Phase 9: CI/CD & Operations | Pending |
+| OPS-08 | Phase 9: CI/CD & Operations | Pending |
+| ARCH-01 | Phase 10: Framework & Architecture Cleanup | Pending |
+| ARCH-02 | Phase 10: Framework & Architecture Cleanup | Pending |
+| ARCH-03 | Phase 10: Framework & Architecture Cleanup | Pending |
+| ARCH-04 | Phase 10: Framework & Architecture Cleanup | Pending |
+| ARCH-05 | Phase 10: Framework & Architecture Cleanup | Pending |
+| ARCH-06 | Phase 10: Framework & Architecture Cleanup | Pending |
 
 **Coverage:**
-- v1 requirements: 93 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 93
+- v1 requirements: 90 total (corrected from initial estimate of 93)
+- Mapped to phases: 90/90
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition from code review findings*
+*Last updated: 2026-02-26 after roadmap creation (traceability populated)*
