@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getBlogPostBySlug } from "@/actions/blog";
+import { cachedGetBlogPostBySlug } from "@/lib/cached-queries";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,7 +23,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { data: post } = await getBlogPostBySlug(slug);
+  const { data: post } = await cachedGetBlogPostBySlug(slug);
 
   if (!post) {
     return { title: "Post Not Found" };
@@ -46,7 +46,7 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { data: post, error } = await getBlogPostBySlug(slug);
+  const { data: post, error } = await cachedGetBlogPostBySlug(slug);
 
   if (!post || error) {
     notFound();

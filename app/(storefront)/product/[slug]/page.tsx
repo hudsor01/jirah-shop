@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/actions/products";
+import { cachedGetProductBySlug } from "@/lib/cached-queries";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getProductBySlug(slug);
+  const result = await cachedGetProductBySlug(slug);
 
   if (!result) {
     return { title: "Product Not Found" };
@@ -50,7 +50,7 @@ export default async function ProductDetailPage({
   searchParams: Promise<{ sku?: string }>;
 }) {
   const [{ slug }, { sku }] = await Promise.all([params, searchParams]);
-  const result = await getProductBySlug(slug);
+  const result = await cachedGetProductBySlug(slug);
 
   if (!result) {
     notFound();
