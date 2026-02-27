@@ -11,6 +11,7 @@ import type { Product, ProductVariant, ProductCategory, VariantType } from "@/ty
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 export type ProductFormData = {
   name: string;
@@ -100,12 +101,12 @@ export async function getAdminProducts(options?: {
   category?: string;
   page?: number;
   limit?: number;
-}): Promise<{ products: Product[]; count: number }> {
+}): Promise<ActionResult<{ products: Product[]; count: number }>> {
   await requireAdmin();
 
   const optionsParsed = AdminProductsOptionsSchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { products: [], count: 0 };
+    return ok({ products: [], count: 0 });
   }
 
   const supabase = await createClient();
@@ -132,20 +133,20 @@ export async function getAdminProducts(options?: {
 
   if (error) {
     logger.error("Error fetching admin products", { error: error.message });
-    return { products: [], count: 0 };
+    return fail(error.message);
   }
 
-  return { products: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)), count: count ?? 0 };
+  return ok({ products: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)), count: count ?? 0 });
 }
 
 export async function getAdminProduct(
   id: string
-): Promise<{ product: Product; variants: ProductVariant[] } | null> {
+): Promise<ActionResult<{ product: Product; variants: ProductVariant[] } | null>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return null;
+    return ok(null);
   }
 
   const supabase = await createClient();
@@ -157,7 +158,7 @@ export async function getAdminProduct(
     .single();
 
   if (error || !product) {
-    return null;
+    return ok(null);
   }
 
   const { data: variants } = await supabase
@@ -166,25 +167,25 @@ export async function getAdminProduct(
     .eq("product_id", id)
     .order("sort_order", { ascending: true });
 
-  return {
+  return ok({
     product: normalizeProduct(product as Record<string, unknown>),
     variants: (variants ?? []).map((v) => normalizeVariant(v as Record<string, unknown>)),
-  };
+  });
 }
 
 export async function createProduct(
   formData: ProductFormData,
   variants: VariantFormData[]
-): Promise<{ success: boolean; error?: string; id?: string }> {
+): Promise<ActionResult<string>> {
   await requireAdmin();
 
   const formParsed = ProductFormDataSchema.safeParse(formData);
   if (!formParsed.success) {
-    return { success: false, error: formatZodError(formParsed.error) };
+    return fail(formatZodError(formParsed.error));
   }
   const variantsParsed = z.array(VariantFormDataSchema).safeParse(variants);
   if (!variantsParsed.success) {
-    return { success: false, error: formatZodError(variantsParsed.error) };
+    return fail(formatZodError(variantsParsed.error));
   }
 
   const supabase = await createClient();
@@ -270,7 +271,7 @@ export async function createProduct(
     revalidatePath("/");
     updateTag("products");
 
-    return { success: true, id: product.id };
+    return ok(product.id);
   } catch (err) {
     // Cleanup in reverse order of creation
     if (dbProductId) {
@@ -297,7 +298,7 @@ export async function createProduct(
       }
     }
     const message = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: message };
+    return fail(message);
   }
 }
 
@@ -305,20 +306,20 @@ export async function updateProduct(
   id: string,
   formData: ProductFormData,
   variants: VariantFormData[]
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid product ID" };
+    return fail("Invalid product ID");
   }
   const formParsed = ProductFormDataSchema.safeParse(formData);
   if (!formParsed.success) {
-    return { success: false, error: formatZodError(formParsed.error) };
+    return fail(formatZodError(formParsed.error));
   }
   const variantsParsed = z.array(VariantFormDataSchema).safeParse(variants);
   if (!variantsParsed.success) {
-    return { success: false, error: formatZodError(variantsParsed.error) };
+    return fail(formatZodError(variantsParsed.error));
   }
 
   const supabase = await createClient();
@@ -373,7 +374,7 @@ export async function updateProduct(
       .eq("id", id);
 
     if (error) {
-      return { success: false, error: error.message };
+      return fail(error.message);
     }
 
     // Handle variants: delete removed, update existing, insert new
@@ -482,21 +483,21 @@ export async function updateProduct(
     revalidatePath("/");
     updateTag("products");
 
-    return { success: true };
+    return ok(undefined);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: message };
+    return fail(message);
   }
 }
 
 export async function deleteProduct(
   id: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid product ID" };
+    return fail("Invalid product ID");
   }
 
   const supabase = await createClient();
@@ -523,16 +524,16 @@ export async function deleteProduct(
       .eq("id", id);
 
     if (error) {
-      return { success: false, error: error.message };
+      return fail(error.message);
     }
 
     revalidatePath("/admin/products");
     revalidatePath("/");
     updateTag("products");
 
-    return { success: true };
+    return ok(undefined);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: message };
+    return fail(message);
   }
 }

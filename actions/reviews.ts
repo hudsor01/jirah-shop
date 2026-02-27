@@ -7,6 +7,7 @@ import type { ProductReview } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
 import { parsePagination } from "@/lib/pagination";
 import { reviewLimiter } from "@/lib/rate-limit";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -33,21 +34,20 @@ const StorefrontReviewOptionsSchema = z.object({
 export async function getProductReviews(
   productId: string,
   options?: { page?: number; limit?: number }
-): Promise<{
+): Promise<ActionResult<{
   data: ProductReview[];
   total: number;
   page: number;
   pageSize: number;
-  error: string | null;
-}> {
+}>> {
   const idParsed = z.string().min(1).safeParse(productId);
   if (!idParsed.success) {
-    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid product ID" };
+    return fail("Invalid product ID");
   }
 
   const optionsParsed = StorefrontReviewOptionsSchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid options" };
+    return fail("Invalid options");
   }
 
   const supabase = await createClient();
@@ -65,25 +65,21 @@ export async function getProductReviews(
     .range(from, to);
 
   if (error) {
-    return { data: [], total: 0, page, pageSize, error: error.message };
+    return fail(error.message);
   }
 
-  return {
+  return ok({
     data: data as ProductReview[],
     total: count ?? 0,
     page,
     pageSize,
-    error: null,
-  };
+  });
 }
 
-export async function submitReview(formData: FormData): Promise<{
-  success: boolean;
-  error: string | null;
-}> {
+export async function submitReview(formData: FormData): Promise<ActionResult<void>> {
   const rateCheck = await reviewLimiter.check();
   if (!rateCheck.success) {
-    return { success: false, error: "Too many requests, please try again later." };
+    return fail("Too many requests, please try again later.");
   }
 
   const supabase = await createClient();
@@ -93,7 +89,7 @@ export async function submitReview(formData: FormData): Promise<{
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { success: false, error: "Please sign in to leave a review." };
+    return fail("Please sign in to leave a review.");
   }
 
   const raw = {
@@ -105,7 +101,7 @@ export async function submitReview(formData: FormData): Promise<{
 
   const result = ReviewSubmitSchema.safeParse(raw);
   if (!result.success) {
-    return { success: false, error: formatZodError(result.error) };
+    return fail(formatZodError(result.error));
   }
 
   const { data: hasPurchased } = await supabase.rpc('has_purchased_product', {
@@ -124,10 +120,10 @@ export async function submitReview(formData: FormData): Promise<{
   });
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
-  return { success: true, error: null };
+  return ok(undefined);
 }
 
 // ─── Admin ────────────────────────────────────────────────
@@ -139,12 +135,12 @@ export async function getAdminReviews(options?: {
   status?: "pending" | "approved" | "all";
   page?: number;
   limit?: number;
-}): Promise<{ reviews: ProductReview[]; count: number }> {
+}): Promise<ActionResult<{ reviews: ProductReview[]; count: number }>> {
   await requireAdmin();
 
   const optionsParsed = ReviewOptionsSchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { reviews: [], count: 0 };
+    return ok({ reviews: [], count: 0 });
   }
 
   const supabase = await createClient();
@@ -168,20 +164,20 @@ export async function getAdminReviews(options?: {
 
   if (error) {
     logger.error("Error fetching admin reviews", { error: error.message });
-    return { reviews: [], count: 0 };
+    return fail(error.message);
   }
 
-  return { reviews: (data as ProductReview[]) ?? [], count: count ?? 0 };
+  return ok({ reviews: (data as ProductReview[]) ?? [], count: count ?? 0 });
 }
 
 export async function approveReview(
   id: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid review ID" };
+    return fail("Invalid review ID");
   }
 
   const supabase = await createClient();
@@ -192,21 +188,21 @@ export async function approveReview(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/reviews");
-  return { success: true };
+  return ok(undefined);
 }
 
 export async function rejectReview(
   id: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid review ID" };
+    return fail("Invalid review ID");
   }
 
   const supabase = await createClient();
@@ -219,21 +215,21 @@ export async function rejectReview(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/reviews");
-  return { success: true };
+  return ok(undefined);
 }
 
 export async function deleteReview(
   id: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid review ID" };
+    return fail("Invalid review ID");
   }
 
   const supabase = await createClient();
@@ -244,9 +240,9 @@ export async function deleteReview(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/reviews");
-  return { success: true };
+  return ok(undefined);
 }

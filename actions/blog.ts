@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { BlogPost } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
 import { parsePagination } from "@/lib/pagination";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -34,16 +35,15 @@ export async function getBlogPosts(options?: {
   tag?: string;
   limit?: number;
   page?: number;
-}): Promise<{
+}): Promise<ActionResult<{
   data: BlogPost[];
   total: number;
   page: number;
   pageSize: number;
-  error: string | null;
-}> {
+}>> {
   const optionsParsed = BlogQuerySchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid query parameters" };
+    return fail("Invalid query parameters");
   }
 
   const supabase = await createClient();
@@ -70,25 +70,21 @@ export async function getBlogPosts(options?: {
   const { data, error, count } = await query;
 
   if (error) {
-    return { data: [], total: 0, page, pageSize, error: error.message };
+    return fail(error.message);
   }
 
-  return {
+  return ok({
     data: data as BlogPost[],
     total: count ?? 0,
     page,
     pageSize,
-    error: null,
-  };
+  });
 }
 
-export async function getBlogPostBySlug(slug: string): Promise<{
-  data: BlogPost | null;
-  error: string | null;
-}> {
+export async function getBlogPostBySlug(slug: string): Promise<ActionResult<BlogPost | null>> {
   const slugParsed = z.string().min(1).safeParse(slug);
   if (!slugParsed.success) {
-    return { data: null, error: "Invalid slug" };
+    return fail("Invalid slug");
   }
 
   const supabase = await createClient();
@@ -101,10 +97,10 @@ export async function getBlogPostBySlug(slug: string): Promise<{
     .single();
 
   if (error) {
-    return { data: null, error: error.message };
+    return ok(null);
   }
 
-  return { data: data as BlogPost, error: null };
+  return ok(data as BlogPost);
 }
 
 // ─── Admin Blog Actions ────────────────────────────────────
@@ -128,12 +124,12 @@ export async function getAdminBlogPosts(options?: {
   search?: string;
   page?: number;
   limit?: number;
-}): Promise<{ posts: BlogPost[]; count: number }> {
+}): Promise<ActionResult<{ posts: BlogPost[]; count: number }>> {
   await requireAdmin();
 
   const optionsParsed = AdminBlogOptionsSchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { posts: [], count: 0 };
+    return ok({ posts: [], count: 0 });
   }
 
   const supabase = await createClient();
@@ -154,20 +150,20 @@ export async function getAdminBlogPosts(options?: {
 
   if (error) {
     logger.error("Error fetching blog posts", { error: error.message });
-    return { posts: [], count: 0 };
+    return fail(error.message);
   }
 
-  return { posts: (data as BlogPost[]) ?? [], count: count ?? 0 };
+  return ok({ posts: (data as BlogPost[]) ?? [], count: count ?? 0 });
 }
 
 export async function getAdminBlogPost(
   id: string
-): Promise<BlogPost | null> {
+): Promise<ActionResult<BlogPost | null>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return null;
+    return ok(null);
   }
 
   const supabase = await createClient();
@@ -179,20 +175,20 @@ export async function getAdminBlogPost(
     .single();
 
   if (error || !data) {
-    return null;
+    return ok(null);
   }
 
-  return data as BlogPost;
+  return ok(data as BlogPost);
 }
 
 export async function createBlogPost(
   formData: BlogFormData
-): Promise<{ success: boolean; error?: string; id?: string }> {
+): Promise<ActionResult<string>> {
   await requireAdmin();
 
   const formParsed = BlogFormDataSchema.safeParse(formData);
   if (!formParsed.success) {
-    return { success: false, error: formatZodError(formParsed.error) };
+    return fail(formatZodError(formParsed.error));
   }
 
   const supabase = await createClient();
@@ -210,29 +206,29 @@ export async function createBlogPost(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
   updateTag("blog");
 
-  return { success: true, id: data.id };
+  return ok(data.id);
 }
 
 export async function updateBlogPost(
   id: string,
   formData: BlogFormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid blog post ID" };
+    return fail("Invalid blog post ID");
   }
   const formParsed = BlogFormDataSchema.safeParse(formData);
   if (!formParsed.success) {
-    return { success: false, error: formatZodError(formParsed.error) };
+    return fail(formatZodError(formParsed.error));
   }
 
   const supabase = await createClient();
@@ -262,7 +258,7 @@ export async function updateBlogPost(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/blog");
@@ -270,17 +266,17 @@ export async function updateBlogPost(
   revalidatePath("/blog");
   updateTag("blog");
 
-  return { success: true };
+  return ok(undefined);
 }
 
 export async function deleteBlogPost(
   id: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid blog post ID" };
+    return fail("Invalid blog post ID");
   }
 
   const supabase = await createClient();
@@ -288,12 +284,12 @@ export async function deleteBlogPost(
   const { error } = await supabase.from("blog_posts").delete().eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
   updateTag("blog");
 
-  return { success: true };
+  return ok(undefined);
 }

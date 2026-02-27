@@ -11,6 +11,7 @@ import {
 import type { ShopSettings } from "@/types/database";
 import { requireAdmin } from "@/lib/auth";
 import { uuidSchema, formatZodError } from "@/lib/validations";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -28,6 +29,9 @@ const DEFAULT_SETTINGS: Omit<ShopSettings, "id" | "updated_at"> = {
 };
 
 export async function getShopSettings(): Promise<ShopSettings> {
+  // NOTE: This function intentionally returns raw ShopSettings (not ActionResult)
+  // because it always succeeds — falling back to safe defaults when the DB row is missing.
+  // Callers (e.g. checkout.ts) depend on always receiving a ShopSettings object.
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -57,16 +61,16 @@ export type SettingsFormData = {
 export async function updateShopSettings(
   id: string,
   formData: SettingsFormData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult<void>> {
   await requireAdmin();
 
   const idParsed = uuidSchema.safeParse(id);
   if (!idParsed.success) {
-    return { success: false, error: "Invalid settings ID" };
+    return fail("Invalid settings ID");
   }
   const formParsed = SettingsFormDataSchema.safeParse(formData);
   if (!formParsed.success) {
-    return { success: false, error: formatZodError(formParsed.error) };
+    return fail(formatZodError(formParsed.error));
   }
 
   const supabase = await createClient();
@@ -80,7 +84,7 @@ export async function updateShopSettings(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return fail(error.message);
   }
 
   revalidatePath("/admin/settings");
@@ -89,5 +93,5 @@ export async function updateShopSettings(
   revalidatePath("/");
   updateTag("shop-settings");
 
-  return { success: true };
+  return ok(undefined);
 }
