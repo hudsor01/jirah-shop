@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Customers can browse products, add to cart, and complete checkout with Stripe payments -- the purchase flow must always work correctly and securely.
-**Current focus:** Phase 4: Database Performance -- COMPLETE
+**Current focus:** Phase 5: Application Performance -- COMPLETE
 
 ## Current Position
 
-Phase: 4 of 10 (Database Performance)
-Plan: 4 of 4 in current phase (ALL COMPLETE)
+Phase: 5 of 10 (Application Performance)
+Plan: 3 of 3 in current phase (ALL COMPLETE)
 Status: Phase complete
-Last activity: 2026-02-26 -- Executed all 4 plans for Phase 4 database performance
+Last activity: 2026-02-26 -- Executed all 3 plans for Phase 5 application performance
 
-Progress: [██████████] 100% (Phase 4)
+Progress: [██████████] 100% (Phase 5)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: ~5 min per plan
-- Total execution time: ~60 minutes
+- Total plans completed: 15
+- Average duration: ~6 min per plan
+- Total execution time: ~90 minutes
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [██████████] 100% (Phase 4)
 | 2 - Inventory & Data Integrity | 2/2 | ~13 min | ~6.5 min |
 | 3 - Input Validation & Security Hardening | 3/3 | ~15 min | ~5 min |
 | 4 - Database Performance | 4/4 | ~17 min | ~4 min |
+| 5 - Application Performance | 3/3 | ~30 min | ~10 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-03, 04-01, 04-02, 04-03, 04-04
-- Trend: Fast (parallel wave execution with focused changes)
+- Last 5 plans: 04-03, 04-04, 05-01, 05-02, 05-03
+- Trend: Steady (cross-session execution for larger phase)
 
 *Updated after each plan completion*
 
@@ -59,6 +60,11 @@ Recent decisions affecting current work:
 - [Phase 4]: Customers page verified NOT N+1 -- already uses single .in() query + JS reduce
 - [Phase 4]: Default storefront page size is 20 items for all paginated endpoints
 - [Phase 4]: Blog listing excludes content column via explicit .select() column list
+- [Phase 5]: Used experimental.useCache instead of dynamicIO -- Next.js 16.1.6 renamed the config key
+- [Phase 5]: Used updateTag() instead of revalidateTag() -- single-argument API for server action cache invalidation
+- [Phase 5]: React.cache() wraps action functions in lib/cached-queries.ts for per-request dedup
+- [Phase 5]: Admin Supabase client uses lazy singleton (created on first call, stateless so safe to reuse)
+- [Phase 5]: Cart price validation creates dedicated updateItemPrices rather than repurposing updateQuantity
 
 ### Pending Todos
 
@@ -72,5 +78,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 4 complete, ready to plan Phase 5
+Stopped at: Phase 5 complete, ready to plan Phase 6
 Resume file: None

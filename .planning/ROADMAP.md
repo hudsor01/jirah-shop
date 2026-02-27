@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Inventory & Data Integrity** - Atomic stock management and partial failure rollback
 - [x] **Phase 3: Input Validation & Security Hardening** - Zod schemas on all server actions, rate limiting, password policy
 - [x] **Phase 4: Database Performance** - Postgres RPCs for aggregations, pagination on all listing endpoints
-- [ ] **Phase 5: Application Performance** - Next.js 16 caching, request deduplication, parallelization, singletons
+- [x] **Phase 5: Application Performance** - Next.js 16 caching, request deduplication, parallelization, singletons
 - [ ] **Phase 6: Error Handling & Data Access** - ActionResult adoption, queries layer extraction, code quality fixes
 - [ ] **Phase 7: Testing Foundation** - Critical path test suites, coverage reporting, E2E framework
 - [ ] **Phase 8: Documentation** - README, JSDoc, architecture docs, conventions
@@ -103,9 +103,9 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 05-01: Enable dynamicIO, apply use cache + cacheTag to read-heavy queries
-- [ ] 05-02: React.cache() deduplication, Promise.all() parallelization
-- [ ] 05-03: Singleton patterns, object URL cleanup, cart price revalidation, auth caching
+- [x] 05-01: Enable dynamicIO, apply use cache + cacheTag to read-heavy queries
+- [x] 05-02: React.cache() deduplication, Promise.all() parallelization
+- [x] 05-03: Singleton patterns, object URL cleanup, cart price revalidation, auth caching
 
 ### Phase 6: Error Handling & Data Access
 **Goal**: All server actions use a consistent error contract and data access is separated from business logic
@@ -209,7 +209,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 2. Inventory & Data Integrity | 2/2 | Complete | 2026-02-26 |
 | 3. Input Validation & Security Hardening | 3/3 | Complete | 2026-02-26 |
 | 4. Database Performance | 4/4 | Complete | 2026-02-26 |
-| 5. Application Performance | 0/3 | Not started | - |
+| 5. Application Performance | 3/3 | Complete | 2026-02-26 |
 | 6. Error Handling & Data Access | 0/4 | Not started | - |
 | 7. Testing Foundation | 0/7 | Not started | - |
 | 8. Documentation | 0/3 | Not started | - |
