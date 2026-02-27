@@ -87,7 +87,8 @@ Plans:
 Plans:
 - [ ] 04-01: Postgres RPCs for order stats and sales data
 - [ ] 04-02: N+1 fix for customers page
-- [ ] 04-03: Pagination for products, reviews, blog, and order history
+- [ ] 04-03: Pagination for products and blog (with content column exclusion)
+- [ ] 04-04: Pagination for reviews and account order history
 
 ### Phase 5: Application Performance
 **Goal**: Application leverages Next.js 16 caching primitives and eliminates redundant computation
@@ -207,7 +208,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 1. Critical Security Fixes | 3/3 | Complete | 2026-02-26 |
 | 2. Inventory & Data Integrity | 2/2 | Complete | 2026-02-26 |
 | 3. Input Validation & Security Hardening | 3/3 | Complete | 2026-02-26 |
-| 4. Database Performance | 0/3 | Not started | - |
+| 4. Database Performance | 0/4 | Not started | - |
 | 5. Application Performance | 0/3 | Not started | - |
 | 6. Error Handling & Data Access | 0/4 | Not started | - |
 | 7. Testing Foundation | 0/7 | Not started | - |
