@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ProductReview } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+import { parsePagination } from "@/lib/pagination";
 import { reviewLimiter } from "@/lib/rate-limit";
 
 // ─── Zod Schemas ─────────────────────────────────────────
@@ -24,29 +25,56 @@ const ReviewOptionsSchema = z.object({
 
 // ─── Storefront ───────────────────────────────────────────
 
-export async function getProductReviews(productId: string): Promise<{
+const StorefrontReviewOptionsSchema = z.object({
+  page: z.number().int().positive().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
+export async function getProductReviews(
+  productId: string,
+  options?: { page?: number; limit?: number }
+): Promise<{
   data: ProductReview[];
+  total: number;
+  page: number;
+  pageSize: number;
   error: string | null;
 }> {
   const idParsed = z.string().min(1).safeParse(productId);
   if (!idParsed.success) {
-    return { data: [], error: "Invalid product ID" };
+    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid product ID" };
+  }
+
+  const optionsParsed = StorefrontReviewOptionsSchema.safeParse(options ?? {});
+  if (!optionsParsed.success) {
+    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid options" };
   }
 
   const supabase = await createClient();
+  const { page, pageSize, from, to } = parsePagination({
+    page: options?.page,
+    limit: options?.limit ?? 20,
+  });
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from("product_reviews")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("product_id", productId)
     .eq("is_approved", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
-    return { data: [], error: error.message };
+    return { data: [], total: 0, page, pageSize, error: error.message };
   }
 
-  return { data: data as ProductReview[], error: null };
+  return {
+    data: data as ProductReview[],
+    total: count ?? 0,
+    page,
+    pageSize,
+    error: null,
+  };
 }
 
 export async function submitReview(formData: FormData): Promise<{
@@ -105,7 +133,6 @@ export async function submitReview(formData: FormData): Promise<{
 // ─── Admin ────────────────────────────────────────────────
 
 import { requireAdmin } from "@/lib/auth";
-import { parsePagination } from "@/lib/pagination";
 import { logger } from "@/lib/logger";
 
 export async function getAdminReviews(options?: {

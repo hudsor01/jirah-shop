@@ -3,8 +3,6 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { LOW_STOCK_THRESHOLD } from "@/lib/constants";
-import { toNum } from "@/lib/utils";
 import { normalizeOrder, normalizeOrderItem } from "@/lib/normalize";
 import { parsePagination } from "@/lib/pagination";
 import type { Order, OrderItem, OrderStatus } from "@/types/database";
@@ -147,40 +145,23 @@ export async function getOrderStats(): Promise<{
   await requireAdmin();
   const supabase = await createClient();
 
-  // Total revenue from paid/shipped/delivered orders
-  const { data: revenueData } = await supabase
-    .from("orders")
-    .select("total")
-    .in("status", ["paid", "shipped", "delivered"]);
+  const { data, error } = await supabase.rpc("get_dashboard_stats");
 
-  const totalRevenue =
-    revenueData?.reduce((sum, o) => sum + toNum(o.total), 0) ?? 0;
-
-  // Orders today
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const { count: ordersToday } = await supabase
-    .from("orders")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString());
-
-  // Total customers
-  const { count: totalCustomers } = await supabase
-    .from("customer_profiles")
-    .select("*", { count: "exact", head: true });
-
-  // Low stock products (under 10 units)
-  const { count: lowStockProducts } = await supabase
-    .from("products")
-    .select("*", { count: "exact", head: true })
-    .eq("is_active", true)
-    .lt("stock_quantity", LOW_STOCK_THRESHOLD);
+  if (error || !data) {
+    logger.error("Error fetching dashboard stats", { error: error?.message });
+    return {
+      totalRevenue: 0,
+      ordersToday: 0,
+      totalCustomers: 0,
+      lowStockProducts: 0,
+    };
+  }
 
   return {
-    totalRevenue,
-    ordersToday: ordersToday ?? 0,
-    totalCustomers: totalCustomers ?? 0,
-    lowStockProducts: lowStockProducts ?? 0,
+    totalRevenue: Number(data.total_revenue) || 0,
+    ordersToday: Number(data.orders_today) || 0,
+    totalCustomers: Number(data.total_customers) || 0,
+    lowStockProducts: Number(data.low_stock_products) || 0,
   };
 }
 
@@ -214,17 +195,16 @@ export async function getSalesData(
 
   const supabase = await createClient();
 
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  const { data, error } = await supabase.rpc("get_sales_analytics", {
+    p_days: days,
+  });
 
-  const { data } = await supabase
-    .from("orders")
-    .select("total, created_at")
-    .in("status", ["paid", "shipped", "delivered"])
-    .gte("created_at", startDate.toISOString())
-    .order("created_at", { ascending: true });
+  if (error) {
+    logger.error("Error fetching sales analytics", { error: error.message });
+    return [];
+  }
 
-  // Group by date
+  // Build date map with all dates in range (fill gaps for chart display)
   const grouped: Record<string, { revenue: number; orders: number }> = {};
 
   for (let i = 0; i < days; i++) {
@@ -234,13 +214,19 @@ export async function getSalesData(
     grouped[dateStr] = { revenue: 0, orders: 0 };
   }
 
-  data?.forEach((order) => {
-    const dateStr = new Date(order.created_at).toISOString().split("T")[0];
-    if (grouped[dateStr]) {
-      grouped[dateStr].revenue += toNum(order.total);
-      grouped[dateStr].orders += 1;
+  // Fill from RPC results
+  data?.forEach(
+    (row: { date: string; order_count: number; revenue: number }) => {
+      const dateStr =
+        typeof row.date === "string"
+          ? row.date
+          : new Date(row.date).toISOString().split("T")[0];
+      if (grouped[dateStr]) {
+        grouped[dateStr].revenue = Number(row.revenue) || 0;
+        grouped[dateStr].orders = Number(row.order_count) || 0;
+      }
     }
-  });
+  );
 
   return Object.entries(grouped).map(([date, stats]) => ({
     date,

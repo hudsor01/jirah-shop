@@ -5,6 +5,7 @@ import { signOut } from "@/actions/auth";
 import type { Order, OrderStatus } from "@/types/database";
 import { normalizeOrder } from "@/lib/normalize";
 import { formatPrice as formatCurrency, formatDate } from "@/lib/format";
+import { PaginationControls } from "@/components/storefront/pagination-controls";
 import {
   Card,
   CardContent,
@@ -52,7 +53,17 @@ function statusLabel(status: OrderStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = parseInt(pageParam ?? "1");
+  const pageSize = 20;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   const supabase = await createClient();
 
   const {
@@ -63,14 +74,17 @@ export default async function AccountPage() {
     redirect("/login?redirect=/account");
   }
 
-  // Fetch customer orders
-  const { data: orders } = await supabase
+  // Fetch customer orders with pagination
+  const { data: orders, count } = await supabase
     .from("orders")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   const typedOrders = (orders ?? []).map((o) => normalizeOrder(o as Record<string, unknown>));
+  const totalOrders = count ?? 0;
+  const totalPages = Math.ceil(totalOrders / pageSize);
 
   const displayName =
     user.user_metadata?.full_name ?? user.email ?? "Customer";
@@ -133,9 +147,9 @@ export default async function AccountPage() {
         <CardHeader>
           <CardTitle className="font-serif text-xl">Order History</CardTitle>
           <CardDescription>
-            {typedOrders.length === 0
+            {totalOrders === 0
               ? "You haven't placed any orders yet."
-              : `You have ${typedOrders.length} order${typedOrders.length === 1 ? "" : "s"}.`}
+              : `You have ${totalOrders} order${totalOrders === 1 ? "" : "s"}.`}
           </CardDescription>
         </CardHeader>
 
@@ -169,6 +183,12 @@ export default async function AccountPage() {
                 ))}
               </TableBody>
             </Table>
+
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              baseUrl="/account"
+            />
           </CardContent>
         )}
       </Card>

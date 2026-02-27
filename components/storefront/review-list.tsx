@@ -10,7 +10,7 @@ interface ReviewListProps {
 }
 
 export async function ReviewList({ productId }: ReviewListProps) {
-  const { data: reviews, error } = await getProductReviews(productId);
+  const { data: reviews, total: totalReviewCount, error } = await getProductReviews(productId);
 
   if (error) {
     return (

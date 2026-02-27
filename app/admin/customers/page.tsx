@@ -43,7 +43,10 @@ export default async function AdminCustomersPage({
   const { data: customers, count } = await query;
   const totalCount = count ?? 0;
 
-  // Get order counts for each customer
+  // Get order counts for each customer via a single grouped query.
+  // This is NOT N+1: one query fetches all user_ids for the page's customers,
+  // then JS reduce groups them into per-customer counts. Only the user_id column
+  // is selected, keeping the payload lightweight.
   const customerIds = customers?.map((c) => c.id) ?? [];
   let orderCounts: Record<string, number> = {};
 

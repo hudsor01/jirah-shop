@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getProducts } from "@/actions/products";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SearchBar } from "@/components/storefront/search-bar";
+import { PaginationControls } from "@/components/storefront/pagination-controls";
 import { CATEGORIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -34,8 +35,22 @@ export default async function ShopPage({
   const category = typeof params.category === "string" ? params.category : undefined;
   const search = typeof params.search === "string" ? params.search : undefined;
   const sort = typeof params.sort === "string" ? params.sort : undefined;
+  const page = typeof params.page === "string" ? parseInt(params.page) : 1;
 
-  const products = await getProducts({ category, search, sort });
+  const { data: products, total, page: currentPage, pageSize } = await getProducts({
+    category,
+    search,
+    sort,
+    page,
+  });
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  // Build searchParams record for pagination links (preserve category/search/sort)
+  const paginationParams: Record<string, string> = {};
+  if (category) paginationParams.category = category;
+  if (search) paginationParams.search = search;
+  if (sort) paginationParams.sort = sort;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -93,7 +108,7 @@ export default async function ShopPage({
 
       {/* Results Count */}
       <p className="mb-6 text-sm text-muted-foreground">
-        {products.length} {products.length === 1 ? "product" : "products"} found
+        {total} {total === 1 ? "product" : "products"} found
         {search && (
           <>
             {" "}
@@ -113,6 +128,14 @@ export default async function ShopPage({
 
       {/* Product Grid */}
       <ProductGrid products={products} />
+
+      {/* Pagination */}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        baseUrl="/shop"
+        searchParams={paginationParams}
+      />
     </div>
   );
 }

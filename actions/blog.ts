@@ -4,12 +4,14 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogPost } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
+import { parsePagination } from "@/lib/pagination";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
 const BlogQuerySchema = z.object({
   tag: z.string().optional(),
   limit: z.number().int().positive().optional(),
+  page: z.number().int().positive().optional(),
 });
 
 const BlogFormDataSchema = z.object({
@@ -31,20 +33,31 @@ const AdminBlogOptionsSchema = paginationSchema.extend({
 export async function getBlogPosts(options?: {
   tag?: string;
   limit?: number;
+  page?: number;
 }): Promise<{
   data: BlogPost[];
+  total: number;
+  page: number;
+  pageSize: number;
   error: string | null;
 }> {
   const optionsParsed = BlogQuerySchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { data: [], error: "Invalid query parameters" };
+    return { data: [], total: 0, page: 1, pageSize: 20, error: "Invalid query parameters" };
   }
 
   const supabase = await createClient();
+  const { page, pageSize, from, to } = parsePagination({
+    page: options?.page,
+    limit: options?.limit ?? 20,
+  });
 
   let query = supabase
     .from("blog_posts")
-    .select("*")
+    .select(
+      "id, title, slug, excerpt, cover_image, tags, is_published, published_at, created_at, updated_at",
+      { count: "exact" }
+    )
     .eq("is_published", true)
     .order("published_at", { ascending: false });
 
@@ -52,17 +65,21 @@ export async function getBlogPosts(options?: {
     query = query.contains("tags", [options.tag]);
   }
 
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
+  query = query.range(from, to);
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
-    return { data: [], error: error.message };
+    return { data: [], total: 0, page, pageSize, error: error.message };
   }
 
-  return { data: data as BlogPost[], error: null };
+  return {
+    data: data as BlogPost[],
+    total: count ?? 0,
+    page,
+    pageSize,
+    error: null,
+  };
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<{
@@ -93,7 +110,6 @@ export async function getBlogPostBySlug(slug: string): Promise<{
 // ─── Admin Blog Actions ────────────────────────────────────
 
 import { revalidatePath } from "next/cache";
-import { parsePagination } from "@/lib/pagination";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sanitizeRichHTML } from "@/lib/sanitize";

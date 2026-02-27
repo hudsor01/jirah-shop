@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import type { Product, ProductVariant } from "@/types/database";
 import { sanitizeSearchInput } from "@/lib/auth";
+import { parsePagination } from "@/lib/pagination";
 import { logger } from "@/lib/logger";
 
 // ─── Zod Schemas ─────────────────────────────────────────
@@ -14,6 +15,7 @@ const ProductQuerySchema = z.object({
   search: z.string().optional(),
   sort: z.string().optional(),
   limit: z.number().int().positive().optional(),
+  page: z.number().int().positive().optional(),
 });
 
 // ─── Actions ─────────────────────────────────────────────
@@ -23,17 +25,22 @@ export async function getProducts(options?: {
   search?: string;
   sort?: string;
   limit?: number;
-}): Promise<Product[]> {
+  page?: number;
+}): Promise<{ data: Product[]; total: number; page: number; pageSize: number }> {
   const optionsParsed = ProductQuerySchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return [];
+    return { data: [], total: 0, page: 1, pageSize: 20 };
   }
 
   const supabase = await createClient();
+  const { page, pageSize, from, to } = parsePagination({
+    page: options?.page,
+    limit: options?.limit ?? 20,
+  });
 
   let query = supabase
     .from("products")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("is_active", true);
 
   if (options?.category) {
@@ -64,18 +71,21 @@ export async function getProducts(options?: {
       query = query.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
   }
 
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
+  query = query.range(from, to);
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     logger.error("Error fetching products", { error: error.message });
-    return [];
+    return { data: [], total: 0, page, pageSize };
   }
 
-  return (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>));
+  return {
+    data: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)),
+    total: count ?? 0,
+    page,
+    pageSize,
+  };
 }
 
 export async function getProductBySlug(
