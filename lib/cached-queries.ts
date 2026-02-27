@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cacheTag } from "next/cache";
+import { createPublicClient } from "@/lib/supabase/public";
 import { queryShopSettings } from "@/queries/settings";
 import { queryProducts, queryFeaturedProducts, queryProductBySlug } from "@/queries/products";
 import { queryBlogPosts, queryBlogPostBySlug } from "@/queries/blog";
@@ -8,12 +9,16 @@ import { queryBlogPosts, queryBlogPostBySlug } from "@/queries/blog";
 // ─── Cached Storefront Queries ────────────────────────────
 // These use Next.js 16 "use cache" + cacheTag() for cross-request
 // caching. Mutations call revalidateTag() to bust these caches.
-// Query functions are pure data access — no ActionResult wrapping.
+//
+// IMPORTANT: "use cache" functions cannot call cookies() or other
+// dynamic data sources. We use a public client (publishable key, no cookies)
+// for public data reads. RLS applies normally — only public data is readable.
 
 export async function cachedGetShopSettings() {
   "use cache";
   cacheTag("shop-settings");
-  return queryShopSettings();
+  const client = createPublicClient();
+  return queryShopSettings(client);
 }
 
 export async function cachedGetProducts(options?: {
@@ -25,13 +30,15 @@ export async function cachedGetProducts(options?: {
 }) {
   "use cache";
   cacheTag("products");
-  return queryProducts(options);
+  const client = createPublicClient();
+  return queryProducts({ ...options, client });
 }
 
 export async function cachedGetFeaturedProducts() {
   "use cache";
   cacheTag("products");
-  return queryFeaturedProducts();
+  const client = createPublicClient();
+  return queryFeaturedProducts(client);
 }
 
 export async function cachedGetBlogPosts(options?: {
@@ -41,7 +48,8 @@ export async function cachedGetBlogPosts(options?: {
 }) {
   "use cache";
   cacheTag("blog");
-  return queryBlogPosts(options);
+  const client = createPublicClient();
+  return queryBlogPosts({ ...options, client });
 }
 
 // ─── Per-Request Deduplication (React.cache) ─────────────

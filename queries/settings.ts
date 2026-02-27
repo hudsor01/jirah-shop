@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   SHIPPING_COST,
   FREE_SHIPPING_THRESHOLD,
@@ -13,8 +14,8 @@ const DEFAULT_SETTINGS: Omit<ShopSettings, "id" | "updated_at"> = {
   allowed_shipping_countries: [...ALLOWED_SHIPPING_COUNTRIES],
 };
 
-export async function queryShopSettings(): Promise<ShopSettings> {
-  const supabase = await createClient();
+export async function queryShopSettings(client?: SupabaseClient): Promise<ShopSettings> {
+  const supabase = client ?? await createClient();
 
   const { data, error } = await supabase
     .from("shop_settings")

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import { sanitizeSearchInput } from "@/lib/auth";
 import { parsePagination } from "@/lib/pagination";
@@ -12,8 +13,9 @@ export async function queryProducts(options?: {
   sort?: string;
   limit?: number;
   page?: number;
+  client?: SupabaseClient;
 }): Promise<{ data: Product[]; total: number; page: number; pageSize: number }> {
-  const supabase = await createClient();
+  const supabase = options?.client ?? await createClient();
   const { page, pageSize, from, to } = parsePagination({
     page: options?.page,
     limit: options?.limit ?? 20,
@@ -95,8 +97,8 @@ export async function queryProductBySlug(
   };
 }
 
-export async function queryFeaturedProducts(): Promise<Product[]> {
-  const supabase = await createClient();
+export async function queryFeaturedProducts(client?: SupabaseClient): Promise<Product[]> {
+  const supabase = client ?? await createClient();
 
   const { data, error } = await supabase
     .from("products")

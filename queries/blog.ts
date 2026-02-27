@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { sanitizeSearchInput } from "@/lib/auth";
 import { parsePagination } from "@/lib/pagination";
 import type { BlogPost } from "@/types/database";
@@ -9,8 +10,9 @@ export async function queryBlogPosts(options?: {
   tag?: string;
   limit?: number;
   page?: number;
+  client?: SupabaseClient;
 }): Promise<{ data: BlogPost[]; total: number; page: number; pageSize: number }> {
-  const supabase = await createClient();
+  const supabase = options?.client ?? await createClient();
   const { page, pageSize, from, to } = parsePagination({
     page: options?.page,
     limit: options?.limit ?? 20,

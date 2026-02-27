@@ -115,5 +115,5 @@ export function mockAuthUser(
   auth.getUser.mockResolvedValue({
     data: { user },
     error,
-  })
+  } as any)
 }
