@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import { emailSchema, formatZodError } from "@/lib/validations";
 import { contactLimiter } from "@/lib/rate-limit";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 const ContactFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -13,13 +14,10 @@ const ContactFormSchema = z.object({
   message: z.string().min(1, "Message is required").max(5000, "Message must be under 5000 characters"),
 });
 
-export async function submitContactForm(formData: FormData): Promise<{
-  success: boolean;
-  error?: string;
-}> {
+export async function submitContactForm(formData: FormData): Promise<ActionResult<void>> {
   const rateCheck = await contactLimiter.check();
   if (!rateCheck.success) {
-    return { success: false, error: "Too many requests, please try again later." };
+    return fail("Too many requests, please try again later.");
   }
 
   const raw = {
@@ -31,7 +29,7 @@ export async function submitContactForm(formData: FormData): Promise<{
 
   const result = ContactFormSchema.safeParse(raw);
   if (!result.success) {
-    return { success: false, error: formatZodError(result.error) };
+    return fail(formatZodError(result.error));
   }
 
   const supabase = await createClient();
@@ -45,8 +43,8 @@ export async function submitContactForm(formData: FormData): Promise<{
 
   if (error) {
     logger.error("Failed to save contact submission", { error: error.message });
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 
-  return { success: true };
+  return ok(undefined);
 }

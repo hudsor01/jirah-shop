@@ -7,6 +7,7 @@ import type { Product, ProductVariant } from "@/types/database";
 import { sanitizeSearchInput } from "@/lib/auth";
 import { parsePagination } from "@/lib/pagination";
 import { logger } from "@/lib/logger";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -26,10 +27,10 @@ export async function getProducts(options?: {
   sort?: string;
   limit?: number;
   page?: number;
-}): Promise<{ data: Product[]; total: number; page: number; pageSize: number }> {
+}): Promise<ActionResult<{ data: Product[]; total: number; page: number; pageSize: number }>> {
   const optionsParsed = ProductQuerySchema.safeParse(options ?? {});
   if (!optionsParsed.success) {
-    return { data: [], total: 0, page: 1, pageSize: 20 };
+    return ok({ data: [], total: 0, page: 1, pageSize: 20 });
   }
 
   const supabase = await createClient();
@@ -77,23 +78,23 @@ export async function getProducts(options?: {
 
   if (error) {
     logger.error("Error fetching products", { error: error.message });
-    return { data: [], total: 0, page, pageSize };
+    return fail(error.message);
   }
 
-  return {
+  return ok({
     data: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)),
     total: count ?? 0,
     page,
     pageSize,
-  };
+  });
 }
 
 export async function getProductBySlug(
   slug: string
-): Promise<{ product: Product; variants: ProductVariant[] } | null> {
+): Promise<ActionResult<{ product: Product; variants: ProductVariant[] } | null>> {
   const slugParsed = z.string().min(1).safeParse(slug);
   if (!slugParsed.success) {
-    return null;
+    return ok(null);
   }
 
   const supabase = await createClient();
@@ -106,7 +107,7 @@ export async function getProductBySlug(
     .single();
 
   if (productError || !product) {
-    return null;
+    return ok(null);
   }
 
   const { data: variants, error: variantsError } = await supabase
@@ -120,13 +121,13 @@ export async function getProductBySlug(
     logger.error("Error fetching variants", { error: variantsError.message });
   }
 
-  return {
+  return ok({
     product: normalizeProduct(product as Record<string, unknown>),
     variants: (variants ?? []).map((v) => normalizeVariant(v as Record<string, unknown>)),
-  };
+  });
 }
 
-export async function getFeaturedProducts(): Promise<Product[]> {
+export async function getFeaturedProducts(): Promise<ActionResult<Product[]>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -139,10 +140,10 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 
   if (error) {
     logger.error("Error fetching featured products", { error: error.message });
-    return [];
+    return fail(error.message);
   }
 
-  return (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>));
+  return ok((data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)));
 }
 
 // ─── Cart Price Validation ────────────────────────────────
@@ -159,13 +160,13 @@ const CartValidationItemSchema = z.object({
  */
 export async function validateCartPrices(
   items: { product_id: string; variant_id: string | null; price: number }[]
-): Promise<{
+): Promise<ActionResult<{
   valid: boolean;
   updates: { product_id: string; variant_id: string | null; newPrice: number }[];
-}> {
+}>> {
   const parsed = z.array(CartValidationItemSchema).safeParse(items);
   if (!parsed.success) {
-    return { valid: false, updates: [] };
+    return ok({ valid: false, updates: [] });
   }
 
   const supabase = await createClient();
@@ -211,6 +212,6 @@ export async function validateCartPrices(
     }
   }
 
-  return { valid: updates.length === 0, updates };
+  return ok({ valid: updates.length === 0, updates });
 }
 
