@@ -7,14 +7,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { signUpWithEmail, type AuthActionState } from "@/actions/auth";
-
-const initialState: AuthActionState = { error: null };
+import type { ActionResult } from "@/lib/action-result";
+import { signUpWithEmail } from "@/actions/auth";
 
 export function SignupForm() {
-  const [state, formAction, isPending] = useActionState(
+  const [state, formAction, isPending] = useActionState<ActionResult<void> | null, FormData>(
     signUpWithEmail,
-    initialState
+    null
   );
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -23,7 +22,7 @@ export function SignupForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      {state.error && (
+      {state && !state.success && (
         <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>

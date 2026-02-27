@@ -10,7 +10,6 @@ import { authLimiter } from "@/lib/rate-limit";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 /** @deprecated Use ActionResult<void> | null directly */
-export type AuthActionState = ActionResult<void> | null;
 
 const SignInSchema = z.object({
   email: emailSchema,

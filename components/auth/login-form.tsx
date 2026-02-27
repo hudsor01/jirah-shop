@@ -9,19 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { signInWithEmail, type AuthActionState } from "@/actions/auth";
+import type { ActionResult } from "@/lib/action-result";
+import { signInWithEmail } from "@/actions/auth";
 import { devSignIn } from "@/actions/dev-auth";
-
-const initialState: AuthActionState = { error: null };
 
 const DEV_AUTO_LOGIN =
   process.env.NODE_ENV === "development" &&
   process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN === "true";
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const [state, formAction, isPending] = useActionState(
+  const [state, formAction, isPending] = useActionState<ActionResult<void> | null, FormData>(
     signInWithEmail,
-    initialState
+    null
   );
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -35,7 +34,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     devAttempted.current = true;
     devSignIn().then((result) => {
       if (result.success) {
-        console.log(`[DevAutoLogin] Signed in as ${result.email}`);
+        console.log(`[DevAutoLogin] Signed in as ${result.data.email}`);
         router.push(redirectTo);
       } else {
         console.warn("[DevAutoLogin]", result.error);
@@ -58,7 +57,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       <input type="hidden" name="redirect" value={redirectTo} />
       <input type="hidden" name="remember" value={rememberMe ? "true" : "false"} />
 
-      {state.error && (
+      {state && !state.success && (
         <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
         </div>
