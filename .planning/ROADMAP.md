@@ -12,13 +12,13 @@ This milestone remediates all 104 findings from the comprehensive code review, o
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Critical Security Fixes** - Eliminate XSS, auth bypass, IDOR, and information leakage vulnerabilities
-- [ ] **Phase 2: Inventory & Data Integrity** - Atomic stock management and partial failure rollback
+- [x] **Phase 1: Critical Security Fixes** - Eliminate XSS, auth bypass, IDOR, and information leakage vulnerabilities
+- [x] **Phase 2: Inventory & Data Integrity** - Atomic stock management and partial failure rollback
 - [x] **Phase 3: Input Validation & Security Hardening** - Zod schemas on all server actions, rate limiting, password policy
 - [x] **Phase 4: Database Performance** - Postgres RPCs for aggregations, pagination on all listing endpoints
 - [x] **Phase 5: Application Performance** - Next.js 16 caching, request deduplication, parallelization, singletons
 - [x] **Phase 6: Error Handling & Data Access** - ActionResult adoption, queries layer extraction, code quality fixes
-- [ ] **Phase 7: Testing Foundation** - Critical path test suites, coverage reporting, E2E framework
+- [x] **Phase 7: Testing Foundation** - Critical path test suites, coverage reporting, E2E framework
 - [ ] **Phase 8: Documentation** - README, JSDoc, architecture docs, conventions
 - [ ] **Phase 9: CI/CD & Operations** - GitHub Actions pipeline, health check, Dependabot, branch protection
 - [ ] **Phase 10: Framework & Architecture Cleanup** - TypeScript target, Suspense boundaries, dead code removal, icon consolidation
@@ -138,13 +138,13 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 07-01: Test infrastructure (coverage reporting, global utilities, mock pattern improvement)
-- [ ] 07-02: Checkout + webhook test suite
-- [ ] 07-03: Auth guards + sanitization test suite
-- [ ] 07-04: Admin products + cart provider test suites
-- [ ] 07-05: Utility tests, snapshot tests, remaining action tests
-- [ ] 07-06: Playwright E2E setup and smoke test
-- [ ] 07-07: Coverage target validation (30% minimum)
+- [x] 07-01: Test infrastructure (coverage reporting, global utilities, mock pattern improvement)
+- [x] 07-02: Checkout + webhook test suite
+- [x] 07-03: Auth guards + sanitization test suite
+- [x] 07-04: Admin products + cart provider test suites
+- [x] 07-05: Utility tests, snapshot tests, remaining action tests
+- [x] 07-06: Playwright E2E setup and smoke test
+- [x] 07-07: Coverage target validation (30% minimum)
 
 ### Phase 8: Documentation
 **Goal**: A new developer can set up and understand the project without asking questions
