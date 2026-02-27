@@ -18,3 +18,12 @@ export const serverEnv = {
   STRIPE_SECRET_KEY: requireEnv("STRIPE_SECRET_KEY"),
   STRIPE_WEBHOOK_SECRET: requireEnv("STRIPE_WEBHOOK_SECRET"),
 } as const;
+
+/**
+ * Lazily-accessed env vars for email — not validated at module load time
+ * so that builds succeed without these vars set. They are validated at
+ * first use inside `lib/email.ts` and `lib/email-notifications.ts`.
+ */
+export function getAdminEmail(): string {
+  return requireEnv("ADMIN_EMAIL");
+}

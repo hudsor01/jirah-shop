@@ -6,6 +6,10 @@ import { logger } from "@/lib/logger";
 import { emailSchema, formatZodError } from "@/lib/validations";
 import { contactLimiter } from "@/lib/rate-limit";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import {
+  notifyContactAutoReply,
+  notifyAdminContactAlert,
+} from "@/lib/email-notifications";
 
 const ContactFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -45,6 +49,21 @@ export async function submitContactForm(formData: FormData): Promise<ActionResul
     logger.error("Failed to save contact submission", { error: error.message });
     return fail("Something went wrong. Please try again.");
   }
+
+  // Fire-and-forget emails — DB insert succeeded, so we return success
+  // regardless of email delivery outcome.
+  const contactProps = {
+    name: result.data.name,
+    email: result.data.email,
+    subject: result.data.subject,
+    message: result.data.message,
+  };
+  Promise.all([
+    notifyContactAutoReply(contactProps),
+    notifyAdminContactAlert(contactProps),
+  ]).catch(() => {
+    // Email failures are already logged inside sendEmail — swallow here
+  });
 
   return ok(undefined);
 }

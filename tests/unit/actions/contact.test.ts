@@ -19,6 +19,11 @@ vi.mock('@/lib/rate-limit', () => ({
   contactLimiter: { check: vi.fn(() => Promise.resolve({ success: true, remaining: 2, reset: Date.now() + 60000 })) },
 }))
 
+vi.mock('@/lib/email-notifications', () => ({
+  notifyContactAutoReply: vi.fn(() => Promise.resolve({ success: true })),
+  notifyAdminContactAlert: vi.fn(() => Promise.resolve({ success: true })),
+}))
+
 import { submitContactForm } from '@/actions/contact'
 import { contactLimiter } from '@/lib/rate-limit'
 

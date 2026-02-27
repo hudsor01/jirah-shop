@@ -49,6 +49,11 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
+vi.mock('@/lib/email-notifications', () => ({
+  notifyOrderConfirmation: vi.fn(),
+  notifyAdminNewOrder: vi.fn(),
+}))
+
 import { POST } from '@/app/api/webhooks/stripe/route'
 import { webhookLimiter } from '@/lib/rate-limit'
 

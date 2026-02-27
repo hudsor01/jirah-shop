@@ -6,6 +6,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { webhookLimiter } from "@/lib/rate-limit";
+import {
+  notifyOrderConfirmation,
+  notifyAdminNewOrder,
+} from "@/lib/email-notifications";
+import type { OrderEmailProps } from "@/emails/types";
 
 /** Validate the metadata we set at checkout creation time. */
 const CheckoutMetadataSchema = z.object({
@@ -262,6 +267,41 @@ async function handleCheckoutSessionCompleted(
   }
 
   logger.info('Order created', { orderId: order.id, sessionId: fullSession.id });
+
+  // ── Send transactional emails (fire-and-forget — never blocks webhook) ──
+  const customerName = shippingAddress.name || customerEmail;
+  const emailProps: OrderEmailProps = {
+    orderNumber: order.id,
+    customerName,
+    customerEmail,
+    items: orderItems.map((item) => ({
+      productName: item.product_name,
+      variantName: item.variant_name,
+      quantity: item.quantity,
+      unitPrice: item.unit_price,
+      totalPrice: item.total_price,
+    })),
+    subtotal: originalSubtotal,
+    shippingCost,
+    discountAmount,
+    total: amountTotal,
+    couponCode,
+    shippingAddress: {
+      name: shippingAddress.name,
+      line1: shippingAddress.line1,
+      line2: shippingAddress.line2,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      postalCode: shippingAddress.postal_code,
+      country: shippingAddress.country,
+    },
+    orderDate: new Date().toISOString(),
+  };
+
+  if (customerEmail) {
+    notifyOrderConfirmation(emailProps);
+  }
+  notifyAdminNewOrder(emailProps);
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge) {

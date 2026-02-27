@@ -24,6 +24,10 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
+vi.mock('@/lib/email-notifications', () => ({
+  notifyOrderStatusUpdate: vi.fn(() => Promise.resolve({ success: true })),
+}))
+
 vi.mock('@/queries/orders', () => ({
   queryAdminOrders: vi.fn(() => Promise.resolve({ orders: [], count: 0 })),
   queryAdminOrder: vi.fn(() => Promise.resolve(null)),
@@ -100,11 +104,20 @@ describe('getAdminOrder', () => {
 describe('updateOrderStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFrom.mockReturnValue({
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    })
+    // mockFrom is called twice: once for update, once for select (email lookup)
+    mockFrom
+      .mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: { email: 'test@example.com', id: 'a0000000-0000-4000-a000-000000000001' } }),
+          }),
+        }),
+      })
   })
 
   it('succeeds with valid ID and status', async () => {
@@ -132,6 +145,7 @@ describe('updateOrderStatus', () => {
   })
 
   it('fails when DB update errors', async () => {
+    mockFrom.mockReset()
     mockFrom.mockReturnValue({
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: { message: 'DB error' } }),

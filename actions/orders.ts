@@ -16,6 +16,7 @@ import {
   querySalesData,
 } from "@/queries/orders";
 import type { QueryOrderWithItems } from "@/queries/orders";
+import { notifyOrderStatusUpdate } from "@/lib/email-notifications";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -96,6 +97,26 @@ export async function updateOrderStatus(
 
   if (error) {
     return fail(error.message);
+  }
+
+  // Send status update email for customer-facing statuses
+  const emailStatuses = ["shipped", "delivered", "cancelled", "refunded"];
+  if (emailStatuses.includes(status)) {
+    const { data: orderData } = await supabase
+      .from("orders")
+      .select("email, id")
+      .eq("id", id)
+      .single();
+
+    if (orderData?.email) {
+      notifyOrderStatusUpdate(orderData.email, {
+        orderNumber: orderData.id,
+        customerName: orderData.email,
+        newStatus: status,
+      }).catch(() => {
+        // Email failures are already logged inside sendEmail — swallow here
+      });
+    }
   }
 
   revalidatePath("/admin/orders");

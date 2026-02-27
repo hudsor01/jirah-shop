@@ -6,6 +6,8 @@ process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'test-publishable-key'
 process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
 process.env.STRIPE_SECRET_KEY = 'sk_test_fake_key'
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_fake_secret'
+process.env.RESEND_API_KEY = 'test-resend-api-key'
+process.env.ADMIN_EMAIL = 'admin@test.com'
 
 // Mock window.matchMedia (some components use media queries)
 if (typeof window !== 'undefined') {
