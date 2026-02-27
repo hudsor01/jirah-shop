@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-02-27T07:30:53.275Z"
+progress:
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 26
+  completed_plans: 26
+---
+
 # Project State
 
 ## Project Reference
@@ -5,23 +18,23 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Customers can browse products, add to cart, and complete checkout with Stripe payments -- the purchase flow must always work correctly and securely.
-**Current focus:** Phase 6: Error Handling & Data Access -- COMPLETE
+**Current focus:** Phase 7: Testing Foundation -- COMPLETE
 
 ## Current Position
 
-Phase: 6 of 10 (Error Handling & Data Access)
-Plan: 4 of 4 in current phase (ALL COMPLETE)
+Phase: 7 of 10 (Testing Foundation)
+Plan: 7 of 7 in current phase (ALL COMPLETE)
 Status: Phase complete
-Last activity: 2026-02-26 -- Executed all 4 plans for Phase 6 error handling & data access
+Last activity: 2026-02-26 -- Executed all 7 plans for Phase 7 testing foundation
 
-Progress: [██████████] 100% (Phase 6)
+Progress: [██████████] 100% (Phase 7)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19
-- Average duration: ~8 min per plan
-- Total execution time: ~150 minutes
+- Total plans completed: 26
+- Average duration: ~10 min per plan
+- Total execution time: ~245 minutes
 
 **By Phase:**
 
@@ -33,10 +46,11 @@ Progress: [██████████] 100% (Phase 6)
 | 4 - Database Performance | 4/4 | ~17 min | ~4 min |
 | 5 - Application Performance | 3/3 | ~30 min | ~10 min |
 | 6 - Error Handling & Data Access | 4/4 | ~60 min | ~15 min |
+| 7 - Testing Foundation | 7/7 | ~95 min | ~14 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-03, 06-01, 06-02, 06-03, 06-04
-- Trend: Larger structural refactors take longer (multi-session for Phase 6)
+- Last 5 plans: 07-03, 07-04, 07-05, 07-06, 07-07
+- Trend: Testing plans involve significant code generation (mock factories, test suites)
 
 *Updated after each plan completion*
 
@@ -72,6 +86,12 @@ Recent decisions affecting current work:
 - [Phase 6]: Shared useCheckout hook replaces duplicated checkout logic in cart-drawer and cart page
 - [Phase 6]: FileWithPreview wrapper type replaces File object mutation in upload hook
 - [Phase 6]: signInWithGoogle server action removed (dead code, buttons use browser client)
+- [Phase 7]: vi.hoisted() mandatory for all mock variables referenced inside vi.mock() factory functions
+- [Phase 7]: Coverage thresholds set at 30% minimum (statements, branches, functions, lines)
+- [Phase 7]: Webhook tests classified as integration tests in tests/integration/ directory
+- [Phase 7]: E2E tests in tests/e2e/ with Playwright, separated from vitest execution
+- [Phase 7]: Snapshot tests omitted (server components make snapshots fragile)
+- [Phase 7]: sonner toast mock uses Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() })
 
 ### Pending Todos
 
@@ -86,5 +106,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 6 complete, ready to plan Phase 7
+Stopped at: Phase 7 complete, ready to verify and close phase
 Resume file: None
