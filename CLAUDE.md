@@ -86,3 +86,52 @@ If I catch myself deviating:
 - Trust the process and follow it exactly without deviations
 - Complete the ENTIRE workflow automatically without user confirmation requests
 - No shortcuts, no skipping, no stopping mid-process
+
+---
+
+# Project Conventions
+
+## Stack
+- Next.js 16, React 19, TypeScript, TailwindCSS v4, shadcn/ui
+- Supabase (auth + storage + PostgreSQL), Stripe (payments)
+- Package manager: bun (never npm/yarn/pnpm)
+
+## Server Actions
+- All server actions return `ActionResult<T>` from `@/lib/action-result`
+- Use `ok(data)` for success, `fail("message")` for errors
+- Validate all input with Zod `safeParse()` before business logic
+- No thrown exceptions -- all errors are returned values
+- See `docs/error-handling.md` for full pattern
+
+## Data Access
+- Query functions in `queries/` directory (not inline in actions)
+- Server actions call query functions for database operations
+- Server Components can call query functions directly for reads
+
+## Supabase Client
+- Use `@supabase/ssr` with `getAll`/`setAll` cookie methods only
+- Never use `get`/`set`/`remove` cookie methods
+- Never import from `auth-helpers-nextjs`
+- Browser client: `lib/supabase/client.ts`
+- Server client: `lib/supabase/server.ts`
+- Env var: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (not ANON_KEY)
+
+## Caching
+- `use cache` + `cacheTag()` for read-heavy queries
+- `updateTag()` to invalidate (not `revalidateTag()`)
+- `React.cache()` for per-request deduplication in `lib/cached-queries.ts`
+- Config flag: `experimental.useCache: true` in next.config
+
+## Testing
+- Vitest for unit/integration tests
+- `vi.hoisted()` mandatory for mock variables in `vi.mock()` factories
+- Playwright for E2E tests in `tests/e2e/`
+- Coverage minimum: 30% (statements, branches, functions, lines)
+- Run: `bun test`, `bun run test:coverage`, `bun run test:e2e`
+
+## Patterns
+- Image upload: `useSupabaseUpload` hook -> `<Dropzone>` component
+- Cart: `useCart()` from `providers/cart-provider`
+- Checkout: `useCheckout()` shared hook
+- Auth: Google OAuth via browser client (not server actions)
+- Admin Supabase client: lazy singleton in `lib/supabase/admin.ts`
