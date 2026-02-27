@@ -155,7 +155,6 @@ export function ProductsClient({
                     <div className="flex items-center gap-3">
                       {product.images?.[0] && (
                         <Image
-                          unoptimized
                           src={product.images[0]}
                           alt={product.name}
                           width={40}

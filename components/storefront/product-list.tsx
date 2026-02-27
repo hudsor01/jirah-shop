@@ -47,7 +47,7 @@ const ProductList = ({ products }: ProductProps) => {
               <CardContent className='flex flex-1 flex-col justify-between gap-6'>
                 {/* Product Image */}
                 <a href='#'>
-                  <Image unoptimized src={product.image} alt={product.imgAlt} width={200} height={200} className='mx-auto size-50' />
+                  <Image src={product.image} alt={product.imgAlt} width={200} height={200} className='mx-auto size-50' />
                 </a>
 
                 {/* Product Details */}

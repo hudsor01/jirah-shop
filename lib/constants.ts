@@ -14,47 +14,44 @@ export const CATEGORIES: {
     value: "skincare",
     label: "Skincare",
     description: "Cleansers, serums, moisturizers, masks & more",
-    image:
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80&fit=crop&auto=format",
+    image: "/images/categories/skincare.jpg",
   },
   {
     value: "makeup",
     label: "Makeup",
     description: "Foundations, lip tints, eye palettes & more",
-    image:
-      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80&fit=crop&auto=format",
+    image: "/images/categories/makeup.jpg",
   },
   {
     value: "hair",
     label: "Hair Care",
     description: "Shampoos, treatments, styling & more",
-    image:
-      "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&q=80&fit=crop&auto=format",
+    image: "/images/categories/hair.jpg",
   },
   {
     value: "body",
     label: "Body Care",
     description: "Body lotions, scrubs, bath essentials & more",
-    image:
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=800&q=80&fit=crop&auto=format",
+    image: "/images/categories/body.jpg",
   },
   {
     value: "tools",
     label: "Beauty Tools",
     description: "Brushes, rollers, gua sha & more",
-    image:
-      "https://images.unsplash.com/photo-1522338242992-e1a54f0e2ed4?w=800&q=80&fit=crop&auto=format",
+    image: "/images/categories/tools.jpg",
   },
 ];
 
-export const ORDER_STATUSES = [
-  "pending",
-  "paid",
-  "shipped",
-  "delivered",
-  "cancelled",
-  "refunded",
-] as const;
+export const ORDER_STATUS = {
+  PENDING: "pending",
+  PAID: "paid",
+  SHIPPED: "shipped",
+  DELIVERED: "delivered",
+  CANCELLED: "cancelled",
+  REFUNDED: "refunded",
+} as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 
 export const CURRENCY = "usd";
 export const SHIPPING_COST = 5.99;

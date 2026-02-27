@@ -30,7 +30,7 @@ const Blog = ({ blogCards }: { blogCards: BlogCard }) => {
           {blogCards.map((item, index) => (
             <Card className='pt-0 shadow-none max-lg:last:col-span-full' key={index}>
               <CardContent className='px-0'>
-                <Image unoptimized src={item.img} alt={item.alt} width={640} height={360} className='aspect-video h-60 w-full rounded-t-xl object-cover' />
+                <Image src={item.img} alt={item.alt} width={640} height={360} className='aspect-video h-60 w-full rounded-t-xl object-cover' />
               </CardContent>
               <CardHeader className='mb-2 gap-3'>
                 <CardTitle className='text-xl'>
