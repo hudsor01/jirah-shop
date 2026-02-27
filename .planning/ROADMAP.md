@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Input Validation & Security Hardening** - Zod schemas on all server actions, rate limiting, password policy
 - [x] **Phase 4: Database Performance** - Postgres RPCs for aggregations, pagination on all listing endpoints
 - [x] **Phase 5: Application Performance** - Next.js 16 caching, request deduplication, parallelization, singletons
-- [ ] **Phase 6: Error Handling & Data Access** - ActionResult adoption, queries layer extraction, code quality fixes
+- [x] **Phase 6: Error Handling & Data Access** - ActionResult adoption, queries layer extraction, code quality fixes
 - [ ] **Phase 7: Testing Foundation** - Critical path test suites, coverage reporting, E2E framework
 - [ ] **Phase 8: Documentation** - README, JSDoc, architecture docs, conventions
 - [ ] **Phase 9: CI/CD & Operations** - GitHub Actions pipeline, health check, Dependabot, branch protection
@@ -120,10 +120,10 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 06-01: ActionResult adoption across all server actions
-- [ ] 06-02: Client consumer updates for ActionResult
-- [ ] 06-03: Extract queries/ data access layer
-- [ ] 06-04: Deduplication and code quality fixes
+- [x] 06-01: ActionResult adoption across all server actions
+- [x] 06-02: Client consumer updates for ActionResult
+- [x] 06-03: Extract queries/ data access layer
+- [x] 06-04: Deduplication and code quality fixes
 
 ### Phase 7: Testing Foundation
 **Goal**: Critical code paths have automated test coverage and testing infrastructure is production-ready
@@ -210,7 +210,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 3. Input Validation & Security Hardening | 3/3 | Complete | 2026-02-26 |
 | 4. Database Performance | 4/4 | Complete | 2026-02-26 |
 | 5. Application Performance | 3/3 | Complete | 2026-02-26 |
-| 6. Error Handling & Data Access | 0/4 | Not started | - |
+| 6. Error Handling & Data Access | 4/4 | Complete | 2026-02-26 |
 | 7. Testing Foundation | 0/7 | Not started | - |
 | 8. Documentation | 0/3 | Not started | - |
 | 9. CI/CD & Operations | 0/3 | Not started | - |

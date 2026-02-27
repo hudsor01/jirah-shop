@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Customers can browse products, add to cart, and complete checkout with Stripe payments -- the purchase flow must always work correctly and securely.
-**Current focus:** Phase 5: Application Performance -- COMPLETE
+**Current focus:** Phase 6: Error Handling & Data Access -- COMPLETE
 
 ## Current Position
 
-Phase: 5 of 10 (Application Performance)
-Plan: 3 of 3 in current phase (ALL COMPLETE)
+Phase: 6 of 10 (Error Handling & Data Access)
+Plan: 4 of 4 in current phase (ALL COMPLETE)
 Status: Phase complete
-Last activity: 2026-02-26 -- Executed all 3 plans for Phase 5 application performance
+Last activity: 2026-02-26 -- Executed all 4 plans for Phase 6 error handling & data access
 
-Progress: [██████████] 100% (Phase 5)
+Progress: [██████████] 100% (Phase 6)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: ~6 min per plan
-- Total execution time: ~90 minutes
+- Total plans completed: 19
+- Average duration: ~8 min per plan
+- Total execution time: ~150 minutes
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [██████████] 100% (Phase 5)
 | 3 - Input Validation & Security Hardening | 3/3 | ~15 min | ~5 min |
 | 4 - Database Performance | 4/4 | ~17 min | ~4 min |
 | 5 - Application Performance | 3/3 | ~30 min | ~10 min |
+| 6 - Error Handling & Data Access | 4/4 | ~60 min | ~15 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03, 04-04, 05-01, 05-02, 05-03
-- Trend: Steady (cross-session execution for larger phase)
+- Last 5 plans: 05-03, 06-01, 06-02, 06-03, 06-04
+- Trend: Larger structural refactors take longer (multi-session for Phase 6)
 
 *Updated after each plan completion*
 
@@ -65,6 +66,12 @@ Recent decisions affecting current work:
 - [Phase 5]: React.cache() wraps action functions in lib/cached-queries.ts for per-request dedup
 - [Phase 5]: Admin Supabase client uses lazy singleton (created on first call, stateless so safe to reuse)
 - [Phase 5]: Cart price validation creates dedicated updateItemPrices rather than repurposing updateQuantity
+- [Phase 6]: ActionResult<T> discriminated union with ok()/fail() helpers adopted across all 38 server actions
+- [Phase 6]: Client consumers use success/error discrimination instead of try/catch or optional chaining
+- [Phase 6]: Data access extracted to queries/ layer (products.ts, orders.ts, blog.ts, settings.ts, reviews.ts, coupons.ts, admin.ts)
+- [Phase 6]: Shared useCheckout hook replaces duplicated checkout logic in cart-drawer and cart page
+- [Phase 6]: FileWithPreview wrapper type replaces File object mutation in upload hook
+- [Phase 6]: signInWithGoogle server action removed (dead code, buttons use browser client)
 
 ### Pending Todos
 
@@ -74,9 +81,10 @@ None yet.
 
 - Migrations 00010 and 00011 (dashboard stats + sales analytics RPCs) must be applied to production Supabase database
 - Stock decrement RPC migration (`supabase/migrations/00009_decrement_stock_rpc.sql`) must be applied to production Supabase database
+- Pre-existing build failure: cookies() inside "use cache" on `/checkout/failure` and `/admin/blog` pages (Next.js 16 prerendering issue)
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 5 complete, ready to plan Phase 6
+Stopped at: Phase 6 complete, ready to plan Phase 7
 Resume file: None
