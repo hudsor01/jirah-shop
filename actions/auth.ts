@@ -7,10 +7,10 @@ import { SITE_URL } from "@/lib/constants";
 import { sanitizeRedirect } from "@/lib/auth";
 import { emailSchema, passwordSchema, formatZodError } from "@/lib/validations";
 import { authLimiter } from "@/lib/rate-limit";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
-export type AuthActionState = {
-  error: string | null;
-};
+/** @deprecated Use ActionResult<void> | null directly */
+export type AuthActionState = ActionResult<void> | null;
 
 const SignInSchema = z.object({
   email: emailSchema,
@@ -29,12 +29,12 @@ const SignUpSchema = z.object({
 });
 
 export async function signInWithEmail(
-  _prevState: AuthActionState,
+  _prevState: ActionResult<void> | null,
   formData: FormData
-): Promise<AuthActionState> {
+): Promise<ActionResult<void>> {
   const rateCheck = await authLimiter.check();
   if (!rateCheck.success) {
-    return { error: "Too many requests, please try again later." };
+    return fail("Too many requests, please try again later.");
   }
 
   const raw = {
@@ -45,7 +45,7 @@ export async function signInWithEmail(
 
   const result = SignInSchema.safeParse(raw);
   if (!result.success) {
-    return { error: formatZodError(result.error) };
+    return fail(formatZodError(result.error));
   }
 
   const redirectTo = sanitizeRedirect(result.data.redirect ?? "/");
@@ -57,19 +57,19 @@ export async function signInWithEmail(
   });
 
   if (error) {
-    return { error: error.message };
+    return fail(error.message);
   }
 
   redirect(redirectTo);
 }
 
 export async function signUpWithEmail(
-  _prevState: AuthActionState,
+  _prevState: ActionResult<void> | null,
   formData: FormData
-): Promise<AuthActionState> {
+): Promise<ActionResult<void>> {
   const rateCheck = await authLimiter.check();
   if (!rateCheck.success) {
-    return { error: "Too many requests, please try again later." };
+    return fail("Too many requests, please try again later.");
   }
 
   const raw = {
@@ -81,7 +81,7 @@ export async function signUpWithEmail(
 
   const result = SignUpSchema.safeParse(raw);
   if (!result.success) {
-    return { error: formatZodError(result.error) };
+    return fail(formatZodError(result.error));
   }
 
   const supabase = await createClient();
@@ -97,13 +97,13 @@ export async function signUpWithEmail(
   });
 
   if (error) {
-    return { error: error.message };
+    return fail(error.message);
   }
 
   redirect("/login?message=Check your email to confirm your account.");
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(): Promise<ActionResult<{ url: string }>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -114,10 +114,10 @@ export async function signInWithGoogle() {
   });
 
   if (error) {
-    return { error: error.message };
+    return fail(error.message);
   }
 
-  return { url: data.url };
+  return ok({ url: data.url });
 }
 
 export async function signOut() {

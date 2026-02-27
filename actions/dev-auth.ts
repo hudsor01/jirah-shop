@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { type ActionResult, ok, fail } from "@/lib/action-result";
 
 // No external input — reads from process.env only. No Zod validation required.
 
@@ -9,24 +10,20 @@ import { createClient } from "@/lib/supabase/server";
  * server-side env vars (DEV_EMAIL / DEV_PASSWORD — no NEXT_PUBLIC_ prefix).
  * Credentials never reach the client bundle.
  */
-export async function devSignIn(): Promise<{
-  success?: boolean;
-  email?: string;
-  error?: string;
-}> {
+export async function devSignIn(): Promise<ActionResult<{ email: string }>> {
   if (process.env.NODE_ENV !== "development") {
-    return { error: "devSignIn is not available outside of development" };
+    return fail("devSignIn is not available outside of development");
   }
 
   if (process.env.ALLOW_DEV_AUTH !== "true") {
-    return { error: "devSignIn requires ALLOW_DEV_AUTH=true in environment" };
+    return fail("devSignIn requires ALLOW_DEV_AUTH=true in environment");
   }
 
   const email = process.env.DEV_EMAIL;
   const password = process.env.DEV_PASSWORD;
 
   if (!email || !password) {
-    return { error: "DEV_EMAIL and DEV_PASSWORD must be set in .env.local" };
+    return fail("DEV_EMAIL and DEV_PASSWORD must be set in .env.local");
   }
 
   const supabase = await createClient();
@@ -37,8 +34,8 @@ export async function devSignIn(): Promise<{
   });
 
   if (error) {
-    return { error: error.message };
+    return fail(error.message);
   }
 
-  return { success: true, email: data.user?.email ?? email };
+  return ok({ email: data.user?.email ?? email });
 }
