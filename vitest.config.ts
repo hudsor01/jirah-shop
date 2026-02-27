@@ -8,6 +8,32 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    exclude: ['tests/e2e/**', 'node_modules/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      reportsDirectory: './coverage',
+      include: [
+        'actions/**',
+        'lib/**',
+        'providers/**',
+        'queries/**',
+        'app/api/**',
+        'hooks/**',
+      ],
+      exclude: [
+        '**/*.d.ts',
+        'tests/**',
+        '**/*.config.*',
+        'node_modules/**',
+      ],
+      thresholds: {
+        lines: 30,
+        branches: 30,
+        functions: 30,
+        statements: 30,
+      },
+    },
   },
   resolve: {
     alias: {
