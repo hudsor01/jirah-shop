@@ -1,27 +1,18 @@
 /**
- * Validated environment variables.
- * Throws at module load time if any required variable is missing,
- * so deployment failures are caught at cold start rather than at request time.
+ * Barrel re-export for backward compatibility.
+ *
+ * Prefer importing from `@/lib/env.client` or `@/lib/env.server` directly.
+ * This file merges both into a single `env` object for existing callers
+ * that are always server-side.
+ *
+ * NOTE: Because this re-exports from env.server.ts (which imports "server-only"),
+ * this module can ONLY be used in server contexts.
  */
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
+import { clientEnv } from "./env.client";
+import { serverEnv } from "./env.server";
 
 export const env = {
-  // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: requireEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
-  SUPABASE_SERVICE_ROLE_KEY: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-
-  // Stripe
-  STRIPE_SECRET_KEY: requireEnv("STRIPE_SECRET_KEY"),
-  STRIPE_WEBHOOK_SECRET: requireEnv("STRIPE_WEBHOOK_SECRET"),
-
-  // Site
-  NEXT_PUBLIC_SITE_URL: requireEnv("NEXT_PUBLIC_SITE_URL"),
+  ...clientEnv,
+  ...serverEnv,
 } as const;

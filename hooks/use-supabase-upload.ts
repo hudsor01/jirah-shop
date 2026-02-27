@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDropzone, type FileError, type FileRejection } from 'react-dropzone'
 
 import { createClient } from '@/lib/supabase/client'
@@ -54,7 +54,7 @@ type UseSupabaseUploadOptions = {
 type UseSupabaseUploadReturn = ReturnType<typeof useSupabaseUpload>
 
 const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useRef(createClient()).current
   const {
     bucketName,
     path,

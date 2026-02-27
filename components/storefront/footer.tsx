@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Instagram, Twitter, Facebook } from "lucide-react";
 import { NewsletterForm } from "@/components/storefront/newsletter-form";
+import { FooterYear } from "@/components/storefront/footer-year";
 
 const shopLinks = [
   { label: "Skincare", href: "/shop/skincare" },
@@ -141,7 +142,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-7">
         <div className="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
           <p className="text-xs text-muted-foreground tracking-wide">
-            &copy; {new Date().getFullYear()} Jirah Shop. All rights reserved.
+            &copy; <FooterYear /> Jirah Shop. All rights reserved.
           </p>
           <p className="font-serif text-sm italic text-muted-foreground">
             Asian Beauty, Curated for You
