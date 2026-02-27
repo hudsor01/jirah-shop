@@ -45,17 +45,23 @@ export async function createCheckoutSession(
     .map((i) => i.variant_id)
     .filter((id): id is string => !!id);
 
-  const { data: dbProducts } = await supabase
-    .from("products")
-    .select("id, price, stock_quantity, is_active, name")
-    .in("id", productIds);
+  // Run independent DB queries in parallel
+  const [productsResult, variantsResult, settings] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, price, stock_quantity, is_active, name")
+      .in("id", productIds),
+    variantIds.length
+      ? supabase
+          .from("product_variants")
+          .select("id, price, stock_quantity, is_active, product_id")
+          .in("id", variantIds)
+      : Promise.resolve({ data: [] as { id: string; price: number; stock_quantity: number; is_active: boolean; product_id: string }[] }),
+    getShopSettings(),
+  ]);
 
-  const { data: dbVariants } = variantIds.length
-    ? await supabase
-        .from("product_variants")
-        .select("id, price, stock_quantity, is_active, product_id")
-        .in("id", variantIds)
-    : { data: [] };
+  const dbProducts = productsResult.data;
+  const dbVariants = variantsResult.data;
 
   // Build lookup maps
   const productMap = new Map(dbProducts?.map((p) => [p.id, p]) ?? []);
@@ -96,8 +102,6 @@ export async function createCheckoutSession(
     return { ...item, price: serverPrice };
   });
 
-  // Fetch shipping settings from DB — admin owns these values
-  const settings = await getShopSettings();
   const { shipping_cost, free_shipping_threshold, allowed_shipping_countries } =
     settings;
 

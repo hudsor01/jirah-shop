@@ -399,7 +399,9 @@ export async function updateProduct(
         .in("id", toDelete);
     }
 
-    for (const v of variants) {
+    // Process variant updates/inserts in parallel — each variant's
+    // Stripe + DB operations are independent of other variants
+    await Promise.all(variants.map(async (v) => {
       if (v.id) {
         // Update existing variant — only create a new Stripe price if price changed
         const prev = existingVariantMap.get(v.id);
@@ -473,7 +475,7 @@ export async function updateProduct(
           description: v.description,
         });
       }
-    }
+    }));
 
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}/edit`);
