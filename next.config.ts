@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    useCache: true,
+  },
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
