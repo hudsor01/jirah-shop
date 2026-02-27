@@ -3,7 +3,7 @@ import { Poppins, Playfair_Display, Roboto_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/providers/cart-provider";
 import { AuthProvider } from "@/providers/auth-provider";
-import { getShopSettings } from "@/actions/settings";
+import { cachedGetShopSettings } from "@/lib/cached-queries";
 import { SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
@@ -72,7 +72,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getShopSettings();
+  const settings = await cachedGetShopSettings();
 
   return (
     <html lang="en" suppressHydrationWarning>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getProducts } from "@/actions/products";
+import { cachedGetProducts } from "@/lib/cached-queries";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SearchBar } from "@/components/storefront/search-bar";
 import { PaginationControls } from "@/components/storefront/pagination-controls";
@@ -37,7 +37,7 @@ export default async function ShopPage({
   const sort = typeof params.sort === "string" ? params.sort : undefined;
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
 
-  const { data: products, total, page: currentPage, pageSize } = await getProducts({
+  const { data: products, total, page: currentPage, pageSize } = await cachedGetProducts({
     category,
     search,
     sort,

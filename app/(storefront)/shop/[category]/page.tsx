@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProducts } from "@/actions/products";
+import { cachedGetProducts } from "@/lib/cached-queries";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SearchBar } from "@/components/storefront/search-bar";
 import { PaginationControls } from "@/components/storefront/pagination-controls";
@@ -48,7 +48,7 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const { data: products, total, page: currentPage, pageSize } = await getProducts({
+  const { data: products, total, page: currentPage, pageSize } = await cachedGetProducts({
     category: cat.value,
     sort,
     search,

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import {
   SHIPPING_COST,
   FREE_SHIPPING_THRESHOLD,
@@ -87,6 +87,7 @@ export async function updateShopSettings(
   // Revalidate storefront pages that display shipping info
   revalidatePath("/cart");
   revalidatePath("/");
+  updateTag("shop-settings");
 
   return { success: true };
 }

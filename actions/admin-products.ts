@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { CURRENCY } from "@/lib/constants";
 import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
 import { parsePagination } from "@/lib/pagination";
@@ -268,6 +268,7 @@ export async function createProduct(
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    updateTag("products");
 
     return { success: true, id: product.id };
   } catch (err) {
@@ -477,6 +478,7 @@ export async function updateProduct(
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}/edit`);
     revalidatePath("/");
+    updateTag("products");
 
     return { success: true };
   } catch (err) {
@@ -524,6 +526,7 @@ export async function deleteProduct(
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    updateTag("products");
 
     return { success: true };
   } catch (err) {

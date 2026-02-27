@@ -109,7 +109,7 @@ export async function getBlogPostBySlug(slug: string): Promise<{
 
 // ─── Admin Blog Actions ────────────────────────────────────
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sanitizeRichHTML } from "@/lib/sanitize";
@@ -215,6 +215,7 @@ export async function createBlogPost(
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  updateTag("blog");
 
   return { success: true, id: data.id };
 }
@@ -267,6 +268,7 @@ export async function updateBlogPost(
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}/edit`);
   revalidatePath("/blog");
+  updateTag("blog");
 
   return { success: true };
 }
@@ -291,6 +293,7 @@ export async function deleteBlogPost(
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  updateTag("blog");
 
   return { success: true };
 }

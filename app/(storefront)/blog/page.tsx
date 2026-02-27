@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getBlogPosts } from "@/actions/blog";
+import { cachedGetBlogPosts } from "@/lib/cached-queries";
 import { BlogCard } from "./blog-card";
 import { PaginationControls } from "@/components/storefront/pagination-controls";
 
@@ -19,7 +19,7 @@ export default async function BlogPage({
   const tag = typeof params.tag === "string" ? params.tag : undefined;
 
   const { data: posts, total, page: currentPage, pageSize, error } =
-    await getBlogPosts({ page, tag });
+    await cachedGetBlogPosts({ page, tag });
 
   const totalPages = Math.ceil(total / pageSize);
 

@@ -13,7 +13,7 @@ import {
 	Wand2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getFeaturedProducts } from '@/actions/products'
+import { cachedGetFeaturedProducts } from '@/lib/cached-queries'
 import { ProductCard } from '@/components/storefront/product-card'
 import { CATEGORIES } from '@/lib/constants'
 
@@ -26,7 +26,7 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 }
 
 export default async function HomePage() {
-	const featured = await getFeaturedProducts()
+	const featured = await cachedGetFeaturedProducts()
 
 	return (
 		<>
