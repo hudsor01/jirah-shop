@@ -135,6 +135,28 @@ export async function getAdminProduct(
   }
 }
 
+/**
+ * Creates a new product with Stripe integration and variant support.
+ *
+ * Multi-step process: validates admin auth, creates Stripe product and base
+ * price, inserts product into Supabase, then creates Stripe prices and DB
+ * records for each variant. On partial failure, rolls back by deleting the
+ * Supabase product and archiving the orphaned Stripe product.
+ *
+ * @param formData - Product fields (name, slug, description, price, category,
+ *   brand, images, stock, etc.) validated against ProductFormDataSchema
+ * @param variants - Array of variant definitions (name, sku, price, stock,
+ *   variant_type, color_hex, etc.) validated against VariantFormDataSchema
+ * @returns ActionResult<string> - The created product's UUID on success.
+ *   Possible errors: Zod validation errors, "Unknown error", Stripe API errors,
+ *   Supabase insert errors
+ *
+ * @sideeffects
+ * - Creates Stripe product and price objects (base + per-variant)
+ * - Inserts product and variants into Supabase
+ * - Invalidates product cache via revalidatePath() and updateTag("products")
+ * - On failure: deletes orphaned Supabase product and archives Stripe product
+ */
 export async function createProduct(
   formData: ProductFormData,
   variants: VariantFormData[]
@@ -264,6 +286,29 @@ export async function createProduct(
   }
 }
 
+/**
+ * Updates an existing product, syncing changes to Stripe and managing variants.
+ *
+ * Updates Stripe product metadata, conditionally creates a new Stripe price if
+ * the base price changed (deactivating the old one), updates the Supabase
+ * product record, then handles variant CRUD: deletes removed variants, updates
+ * existing variants (with conditional Stripe price creation), and inserts new
+ * variants. All variant operations run in parallel via Promise.all.
+ *
+ * @param id - UUID of the product to update
+ * @param formData - Updated product fields validated against ProductFormDataSchema
+ * @param variants - Full list of variants (existing with id, new without id)
+ *   validated against VariantFormDataSchema
+ * @returns ActionResult<void> - Success with undefined, or error message.
+ *   Possible errors: "Invalid product ID", Zod validation errors, Stripe API
+ *   errors, Supabase update errors, "Unknown error"
+ *
+ * @sideeffects
+ * - Updates Stripe product metadata and conditionally creates new prices
+ * - Deactivates old Stripe prices when price changes
+ * - Updates product and variants in Supabase (insert, update, delete)
+ * - Invalidates product cache via revalidatePath() and updateTag("products")
+ */
 export async function updateProduct(
   id: string,
   formData: ProductFormData,
@@ -452,6 +497,23 @@ export async function updateProduct(
   }
 }
 
+/**
+ * Soft-deletes a product by deactivating it in both Stripe and Supabase.
+ *
+ * Archives the Stripe product (sets active: false) to prevent future charges,
+ * then sets is_active to false on the Supabase product record. Does not
+ * permanently remove data from either system.
+ *
+ * @param id - UUID of the product to delete
+ * @returns ActionResult<void> - Success with undefined, or error message.
+ *   Possible errors: "Invalid product ID", Stripe API errors, Supabase update
+ *   errors, "Unknown error"
+ *
+ * @sideeffects
+ * - Archives Stripe product (active: false)
+ * - Soft-deletes product in Supabase (is_active: false)
+ * - Invalidates product cache via revalidatePath() and updateTag("products")
+ */
 export async function deleteProduct(
   id: string
 ): Promise<ActionResult<void>> {

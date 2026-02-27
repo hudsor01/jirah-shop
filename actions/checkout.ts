@@ -27,6 +27,30 @@ const CreateCheckoutSchema = z.object({
   couponCode: z.string().nullable().optional(),
 });
 
+/**
+ * Creates a Stripe Checkout session with server-side price verification.
+ *
+ * Validates cart items with Zod, then re-fetches authoritative prices from
+ * Supabase (never trusts client-supplied prices). Checks stock availability,
+ * validates coupon (if provided) against expiry, max uses, and minimum order
+ * amount. Applies discount proportionally across line items, adds shipping
+ * if below free shipping threshold, then creates the Stripe Checkout session
+ * with metadata for webhook order processing.
+ *
+ * @param items - Array of cart items (product_id, variant_id, name, price,
+ *   quantity, image) validated against CartItemSchema
+ * @param couponCode - Optional coupon code to apply (validated against DB)
+ * @returns ActionResult<{ url: string }> - The Stripe Checkout redirect URL on
+ *   success. Possible errors: Zod validation errors, "Item is currently
+ *   unavailable" (inactive or insufficient stock), "Coupon is not valid"
+ *   (expired, max uses, minimum not met), "Checkout failed"
+ *
+ * @sideeffects
+ * - Queries Supabase for product/variant prices and stock
+ * - Queries shop settings for shipping configuration
+ * - Validates coupon in Supabase (if provided)
+ * - Creates Stripe Checkout session with line items and metadata
+ */
 export async function createCheckoutSession(
   items: CartItem[],
   couponCode?: string | null

@@ -129,6 +129,23 @@ export async function getAdminBlogPost(
   }
 }
 
+/**
+ * Creates a new blog post with HTML sanitization.
+ *
+ * Validates admin auth and form data with Zod, sanitizes HTML content via
+ * DOMPurify (sanitizeRichHTML), sets published_at timestamp if is_published
+ * is true, then inserts the post into Supabase.
+ *
+ * @param formData - Blog post fields (title, slug, content, excerpt,
+ *   cover_image, tags, is_published) validated against BlogFormDataSchema
+ * @returns ActionResult<string> - The created blog post's UUID on success.
+ *   Possible errors: Zod validation errors, Supabase insert errors
+ *
+ * @sideeffects
+ * - Sanitizes HTML content with DOMPurify
+ * - Inserts blog post into Supabase
+ * - Invalidates blog cache via revalidatePath() and updateTag("blog")
+ */
 export async function createBlogPost(
   formData: BlogFormData
 ): Promise<ActionResult<string>> {
@@ -164,6 +181,26 @@ export async function createBlogPost(
   return ok(data.id);
 }
 
+/**
+ * Updates an existing blog post with HTML sanitization.
+ *
+ * Validates admin auth, post ID, and form data with Zod. Checks if the post is
+ * being newly published (was unpublished, now is_published=true) and sets
+ * published_at accordingly. Sanitizes HTML content via DOMPurify, then updates
+ * the Supabase record.
+ *
+ * @param id - UUID of the blog post to update
+ * @param formData - Updated blog post fields validated against BlogFormDataSchema
+ * @returns ActionResult<void> - Success with undefined, or error message.
+ *   Possible errors: "Invalid blog post ID", Zod validation errors, Supabase
+ *   update errors
+ *
+ * @sideeffects
+ * - Queries existing post to check publication status
+ * - Sanitizes HTML content with DOMPurify
+ * - Updates blog post in Supabase
+ * - Invalidates blog cache via revalidatePath() and updateTag("blog")
+ */
 export async function updateBlogPost(
   id: string,
   formData: BlogFormData

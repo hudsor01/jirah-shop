@@ -59,6 +59,26 @@ export async function signInWithEmail(
   redirect(redirectTo);
 }
 
+/**
+ * Registers a new user account with email and password.
+ *
+ * Enforces rate limiting, validates form data with Zod (full_name, email,
+ * password with 8+ chars / 1 uppercase / 1 number policy, confirm_password
+ * match), creates the user in Supabase Auth with full_name metadata, then
+ * redirects to login page with email confirmation message.
+ *
+ * @param _prevState - Previous ActionResult state (for useActionState hook)
+ * @param formData - Form data containing full_name, email, password, and
+ *   confirm_password fields
+ * @returns ActionResult<void> - Redirects on success (never actually returns).
+ *   Possible errors: "Too many requests, please try again later.", Zod
+ *   validation errors (including "Passwords do not match"), Supabase auth errors
+ *
+ * @sideeffects
+ * - Checks rate limit via authLimiter
+ * - Creates user in Supabase Auth with full_name in user metadata
+ * - Redirects to /login with email confirmation message on success
+ */
 export async function signUpWithEmail(
   _prevState: ActionResult<void> | null,
   formData: FormData

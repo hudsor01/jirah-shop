@@ -134,6 +134,21 @@ export async function getRecentOrders(): Promise<ActionResult<Order[]>> {
   }
 }
 
+/**
+ * Retrieves daily sales analytics for the admin dashboard.
+ *
+ * Validates admin auth and days parameter (1-365), then calls the
+ * querySalesData function which executes the get_sales_analytics Postgres
+ * RPC with the specified date range.
+ *
+ * @param days - Number of days to look back (1-365, defaults to 30)
+ * @returns ActionResult<Array<{ date: string; revenue: number; orders: number }>> -
+ *   Daily revenue and order count aggregates on success. Possible errors:
+ *   "Invalid days parameter", "Failed to fetch sales data"
+ *
+ * @sideeffects
+ * - Calls Supabase RPC get_sales_analytics with date range
+ */
 export async function getSalesData(
   days: number = 30
 ): Promise<ActionResult<{ date: string; revenue: number; orders: number }[]>> {

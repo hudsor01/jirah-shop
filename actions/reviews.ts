@@ -58,6 +58,26 @@ export async function getProductReviews(
   }
 }
 
+/**
+ * Submits a product review from an authenticated user.
+ *
+ * Enforces rate limiting, validates authentication, parses form data with Zod
+ * (product_id, rating 1-5, optional title, comment 10-5000 chars), checks if
+ * the user has purchased the product via Supabase RPC, then inserts the review
+ * as unapproved (is_approved=false) pending admin moderation.
+ *
+ * @param formData - Form data containing product_id, rating (1-5), title
+ *   (optional, max 200 chars), and comment (10-5000 chars)
+ * @returns ActionResult<void> - Success with undefined, or error message.
+ *   Possible errors: "Too many requests, please try again later.", "Please
+ *   sign in to leave a review.", Zod validation errors, Supabase insert errors
+ *
+ * @sideeffects
+ * - Checks rate limit via reviewLimiter
+ * - Validates user authentication via Supabase auth
+ * - Calls has_purchased_product RPC to set is_verified_purchase flag
+ * - Inserts review into Supabase (is_approved=false, pending moderation)
+ */
 export async function submitReview(formData: FormData): Promise<ActionResult<void>> {
   const rateCheck = await reviewLimiter.check();
   if (!rateCheck.success) {

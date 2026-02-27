@@ -59,6 +59,23 @@ export async function getAdminCoupons(options?: {
   }
 }
 
+/**
+ * Creates a new coupon in Supabase.
+ *
+ * Validates admin auth and form data with Zod, uppercases the coupon code,
+ * initializes current_uses to 0, then inserts the coupon into Supabase.
+ *
+ * @param formData - Coupon fields (code, discount_type, discount_value,
+ *   min_order_amount, max_uses, is_active, expires_at) validated against
+ *   CouponFormDataSchema
+ * @returns ActionResult<void> - Success with undefined, or error message.
+ *   Possible errors: Zod validation errors, Supabase insert errors (e.g.,
+ *   duplicate coupon code)
+ *
+ * @sideeffects
+ * - Inserts coupon into Supabase with uppercased code
+ * - Invalidates coupon cache via revalidatePath("/admin/coupons")
+ */
 export async function createCoupon(
   formData: CouponFormData
 ): Promise<ActionResult<void>> {
