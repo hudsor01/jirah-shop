@@ -1,12 +1,17 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * Validates the current user is an admin.
  * Returns the user on success; throws on failure.
  *
+ * Wrapped with React.cache() so multiple calls within a single server
+ * request (e.g. multiple server actions or layout + page) reuse the
+ * same getUser() result — no redundant auth round-trips.
+ *
  * Usage:  const user = await requireAdmin();
  */
-export async function requireAdmin() {
+export const requireAdmin = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,7 +27,7 @@ export async function requireAdmin() {
   }
 
   return user;
-}
+});
 
 /**
  * Validates that a redirect target is a safe relative path.

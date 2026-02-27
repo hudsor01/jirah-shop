@@ -10,6 +10,18 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+
+const dateLongFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+
 /** Format a numeric price as "$12.99". */
 export function formatPrice(price: number): string {
   return priceFormatter.format(price);
@@ -17,18 +29,10 @@ export function formatPrice(price: number): string {
 
 /** Format an ISO date string as "Jan 15, 2025". */
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return dateFormatter.format(new Date(dateString));
 }
 
 /** Format an ISO date string as "January 15, 2025" (used in blog/reviews). */
 export function formatDateLong(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(dateString));
+  return dateLongFormatter.format(new Date(dateString));
 }
