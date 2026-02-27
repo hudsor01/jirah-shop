@@ -145,3 +145,72 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   return (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>));
 }
 
+// ─── Cart Price Validation ────────────────────────────────
+
+const CartValidationItemSchema = z.object({
+  product_id: z.string().min(1),
+  variant_id: z.string().nullable(),
+  price: z.number().positive(),
+});
+
+/**
+ * Validates that client-side cart prices match current server prices.
+ * Returns which items have stale prices so the cart can update before checkout.
+ */
+export async function validateCartPrices(
+  items: { product_id: string; variant_id: string | null; price: number }[]
+): Promise<{
+  valid: boolean;
+  updates: { product_id: string; variant_id: string | null; newPrice: number }[];
+}> {
+  const parsed = z.array(CartValidationItemSchema).safeParse(items);
+  if (!parsed.success) {
+    return { valid: false, updates: [] };
+  }
+
+  const supabase = await createClient();
+
+  const productIds = [...new Set(items.map((i) => i.product_id))];
+  const variantIds = items
+    .map((i) => i.variant_id)
+    .filter((id): id is string => !!id);
+
+  const [productsResult, variantsResult] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, price")
+      .in("id", productIds),
+    variantIds.length
+      ? supabase
+          .from("product_variants")
+          .select("id, price, product_id")
+          .in("id", variantIds)
+      : Promise.resolve({ data: [] as { id: string; price: number; product_id: string }[] }),
+  ]);
+
+  const productPriceMap = new Map(
+    productsResult.data?.map((p) => [p.id, Number(p.price)]) ?? []
+  );
+  const variantPriceMap = new Map(
+    variantsResult.data?.map((v) => [v.id, Number(v.price)]) ?? []
+  );
+
+  const updates: { product_id: string; variant_id: string | null; newPrice: number }[] = [];
+
+  for (const item of items) {
+    const serverPrice = item.variant_id
+      ? variantPriceMap.get(item.variant_id)
+      : productPriceMap.get(item.product_id);
+
+    if (serverPrice !== undefined && Math.round(serverPrice * 100) !== Math.round(item.price * 100)) {
+      updates.push({
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        newPrice: serverPrice,
+      });
+    }
+  }
+
+  return { valid: updates.length === 0, updates };
+}
+

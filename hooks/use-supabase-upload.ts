@@ -94,6 +94,20 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     [files, setFiles]
   )
 
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      files.forEach((file) => {
+        if (file.preview) {
+          URL.revokeObjectURL(file.preview);
+        }
+      });
+    };
+    // Only cleanup on unmount — revoking during files state changes
+    // would break preview display for files still in the list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const dropzoneProps = useDropzone({
     onDrop,
     noClick: true,

@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner'
 import { useCart } from '@/providers/cart-provider'
 import { createCheckoutSession } from '@/actions/checkout'
+import { validateCartPrices } from '@/actions/products'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -41,6 +42,7 @@ export default function CartPage() {
 		couponCode,
 		removeItem,
 		updateQuantity,
+		updateItemPrices,
 		clearCart,
 	} = useCart()
 	const [isPending, startTransition] = useTransition()
@@ -48,6 +50,23 @@ export default function CartPage() {
 	function handleCheckout() {
 		startTransition(async () => {
 			try {
+				// Validate cart prices against server before proceeding
+				const { valid, updates } = await validateCartPrices(
+					items.map((i) => ({
+						product_id: i.product_id,
+						variant_id: i.variant_id,
+						price: i.price,
+					})),
+				)
+
+				if (!valid) {
+					updateItemPrices(updates)
+					toast.info(
+						'Some prices have been updated. Please review your cart.',
+					)
+					return
+				}
+
 				const { url } = await createCheckoutSession(items, couponCode)
 				if (url) {
 					window.location.href = url

@@ -33,6 +33,9 @@ type CartContextValue = {
     variantId: string | null,
     quantity: number
   ) => void;
+  updateItemPrices: (
+    updates: { product_id: string; variant_id: string | null; newPrice: number }[]
+  ) => void;
   clearCart: () => void;
   setCoupon: (code: string | null) => void;
 };
@@ -165,6 +168,25 @@ export function CartProvider({
     []
   );
 
+  const updateItemPrices = useCallback(
+    (updates: { product_id: string; variant_id: string | null; newPrice: number }[]) => {
+      setCartState((prev) => {
+        const updateMap = new Map(
+          updates.map((u) => [itemKey(u.product_id, u.variant_id), u.newPrice])
+        );
+        return {
+          ...prev,
+          items: prev.items.map((i) => {
+            const key = itemKey(i.product_id, i.variant_id);
+            const newPrice = updateMap.get(key);
+            return newPrice !== undefined ? { ...i, price: newPrice } : i;
+          }),
+        };
+      });
+    },
+    []
+  );
+
   const clearCart = useCallback(() => {
     setCartState((prev) => ({ ...prev, items: [], couponCode: null }));
     toast("Cart cleared");
@@ -206,6 +228,7 @@ export function CartProvider({
       addItem,
       removeItem,
       updateQuantity,
+      updateItemPrices,
       clearCart,
       setCoupon,
     }),
@@ -220,6 +243,7 @@ export function CartProvider({
       addItem,
       removeItem,
       updateQuantity,
+      updateItemPrices,
       clearCart,
       setCoupon,
     ]
