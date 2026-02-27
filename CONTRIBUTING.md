@@ -53,3 +53,55 @@ Use conventional commits:
 - `test:` -- adding or updating tests
 - `refactor:` -- code change that neither fixes a bug nor adds a feature
 - `chore:` -- build process, dependencies, or tooling changes
+
+## CI Pipeline
+
+Every push to `main` and every pull request runs the CI pipeline (`.github/workflows/ci.yml`):
+
+1. **Lint** -- ESLint with Next.js and TypeScript rules
+2. **Typecheck** -- `tsc --noEmit` with strict mode
+3. **Test** -- Vitest test suite (198+ tests)
+4. **Build** -- Full Next.js production build
+
+All four checks must pass before merging.
+
+## Branch Protection (Recommended)
+
+Configure these settings in GitHub repo Settings > Branches > Branch protection rules for `main`:
+
+- [x] **Require a pull request before merging**
+  - Require at least 1 approval
+- [x] **Require status checks to pass before merging**
+  - Required checks: `ci`
+- [x] **Require branches to be up to date before merging**
+- [x] **Do not allow bypassing the above settings**
+- [ ] Require signed commits (optional)
+- [x] **Block force pushes**
+
+## Bundle Analysis
+
+To analyze the production bundle:
+
+```bash
+bun run analyze
+```
+
+This opens an interactive treemap visualization in your browser showing the size of each module in the production build.
+
+## Dependency Updates
+
+Dependabot creates weekly PRs for dependency updates:
+- **Production dependencies:** Grouped minor + patch updates
+- **Dev dependencies:** Grouped minor + patch updates
+- **GitHub Actions:** Separate update PRs
+
+Review and merge Dependabot PRs after CI passes.
+
+## Monitoring
+
+Sentry is configured for error tracking and performance monitoring. The DSN is set via `NEXT_PUBLIC_SENTRY_DSN` environment variable. When the DSN is not set (local dev, CI), Sentry initialization is skipped gracefully.
+
+**Performance alerting** should be configured in the [Sentry dashboard](https://sentry.io):
+- Alert on P95 transaction duration > 2s
+- Alert on error rate > 1% of transactions
+- Alert on new unhandled exceptions
