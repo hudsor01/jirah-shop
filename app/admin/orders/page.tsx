@@ -14,12 +14,15 @@ export default async function AdminOrdersPage({
   const currentPage = parseInt(page ?? "1");
   const pageSize = 20;
 
-  const { orders, count } = await getAdminOrders({
+  const result = await getAdminOrders({
     search,
     status,
     page: currentPage,
     limit: pageSize,
   });
+  const { orders, count } = result.success
+    ? result.data
+    : { orders: [], count: 0 };
 
   return (
     <div className="space-y-6">

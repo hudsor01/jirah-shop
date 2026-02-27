@@ -10,11 +10,14 @@ export default async function AdminCouponsPage({
   const currentPage = parseInt(page ?? "1");
   const pageSize = 20;
 
-  const { coupons, count } = await getAdminCoupons({
+  const result = await getAdminCoupons({
     search,
     page: currentPage,
     limit: pageSize,
   });
+  const { coupons, count } = result.success
+    ? result.data
+    : { coupons: [], count: 0 };
 
   return (
     <div className="space-y-6">

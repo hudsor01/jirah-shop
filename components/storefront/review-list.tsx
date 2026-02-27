@@ -10,9 +10,9 @@ interface ReviewListProps {
 }
 
 export async function ReviewList({ productId }: ReviewListProps) {
-  const { data: reviews, total: totalReviewCount, error } = await getProductReviews(productId);
+  const result = await getProductReviews(productId);
 
-  if (error) {
+  if (!result.success) {
     return (
       <p className="text-sm text-muted-foreground">
         Unable to load reviews at this time.
@@ -20,6 +20,7 @@ export async function ReviewList({ productId }: ReviewListProps) {
     );
   }
 
+  const { data: reviews } = result.data;
   const totalReviews = reviews.length;
   const averageRating =
     totalReviews > 0

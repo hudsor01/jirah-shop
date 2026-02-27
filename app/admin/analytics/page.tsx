@@ -11,11 +11,15 @@ import { getSalesData } from "@/actions/orders";
 import { SalesChart } from "@/components/admin/sales-chart";
 
 export default async function AdminAnalyticsPage() {
-  const [salesData30, salesData7, salesData90] = await Promise.all([
+  const [result30, result7, result90] = await Promise.all([
     getSalesData(30),
     getSalesData(7),
     getSalesData(90),
   ]);
+
+  const salesData30 = result30.success ? result30.data : [];
+  const salesData7 = result7.success ? result7.data : [];
+  const salesData90 = result90.success ? result90.data : [];
 
   const totalRevenue30 = salesData30.reduce((s, d) => s + d.revenue, 0);
   const totalOrders30 = salesData30.reduce((s, d) => s + d.orders, 0);

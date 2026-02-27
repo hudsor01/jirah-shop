@@ -11,7 +11,7 @@ export default async function EditProductPage({
 
 	const result = await getAdminProduct(id)
 
-	if (!result) {
+	if (!result.success || !result.data) {
 		notFound()
 	}
 
@@ -20,11 +20,11 @@ export default async function EditProductPage({
 			<div>
 				<h1 className='font-serif text-2xl font-semibold'>Edit Product</h1>
 				<p className='text-sm text-muted-foreground'>
-					Update {result.product.name}
+					Update {result.data.product.name}
 				</p>
 			</div>
 
-			<ProductForm product={result.product} variants={result.variants} />
+			<ProductForm product={result.data.product} variants={result.data.variants} />
 		</div>
 	)
 }

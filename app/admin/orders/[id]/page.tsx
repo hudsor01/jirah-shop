@@ -40,11 +40,13 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
 
-  const order = await getAdminOrder(id);
+  const result = await getAdminOrder(id);
 
-  if (!order) {
+  if (!result.success || !result.data) {
     notFound();
   }
+
+  const order = result.data;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

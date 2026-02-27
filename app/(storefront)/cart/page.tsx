@@ -51,7 +51,7 @@ export default function CartPage() {
 		startTransition(async () => {
 			try {
 				// Validate cart prices against server before proceeding
-				const { valid, updates } = await validateCartPrices(
+				const priceResult = await validateCartPrices(
 					items.map((i) => ({
 						product_id: i.product_id,
 						variant_id: i.variant_id,
@@ -59,17 +59,24 @@ export default function CartPage() {
 					})),
 				)
 
-				if (!valid) {
-					updateItemPrices(updates)
+				if (!priceResult.success) {
+					throw new Error(priceResult.error)
+				}
+
+				if (!priceResult.data.valid) {
+					updateItemPrices(priceResult.data.updates)
 					toast.info(
 						'Some prices have been updated. Please review your cart.',
 					)
 					return
 				}
 
-				const { url } = await createCheckoutSession(items, couponCode)
-				if (url) {
-					window.location.href = url
+				const checkoutResult = await createCheckoutSession(items, couponCode)
+				if (!checkoutResult.success) {
+					throw new Error(checkoutResult.error)
+				}
+				if (checkoutResult.data.url) {
+					window.location.href = checkoutResult.data.url
 				}
 			} catch (error) {
 				toast.error('Checkout failed. Please try again.', {

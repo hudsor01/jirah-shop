@@ -10,11 +10,14 @@ export default async function AdminBlogPage({
   const currentPage = parseInt(page ?? "1");
   const pageSize = 20;
 
-  const { posts, count } = await getAdminBlogPosts({
+  const result = await getAdminBlogPosts({
     search,
     page: currentPage,
     limit: pageSize,
   });
+  const { posts, count } = result.success
+    ? result.data
+    : { posts: [], count: 0 };
 
   return (
     <div className="space-y-6">

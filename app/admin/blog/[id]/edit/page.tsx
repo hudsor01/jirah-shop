@@ -9,9 +9,9 @@ export default async function EditBlogPostPage({
 }) {
   const { id } = await params;
 
-  const post = await getAdminBlogPost(id);
+  const result = await getAdminBlogPost(id);
 
-  if (!post) {
+  if (!result.success || !result.data) {
     notFound();
   }
 
@@ -20,11 +20,11 @@ export default async function EditBlogPostPage({
       <div>
         <h1 className="font-serif text-2xl font-semibold">Edit Post</h1>
         <p className="text-sm text-muted-foreground">
-          Update {post.title}
+          Update {result.data.title}
         </p>
       </div>
 
-      <BlogEditor post={post} />
+      <BlogEditor post={result.data} />
     </div>
   );
 }

@@ -12,11 +12,14 @@ export default async function AdminReviewsPage({
   const filterStatus =
     status === "approved" || status === "pending" ? status : "all";
 
-  const { reviews, count } = await getAdminReviews({
+  const result = await getAdminReviews({
     status: filterStatus,
     page: currentPage,
     limit: pageSize,
   });
+  const { reviews, count } = result.success
+    ? result.data
+    : { reviews: [], count: 0 };
 
   const pendingCount = filterStatus === "all"
     ? reviews.filter((r) => !r.is_approved).length

@@ -15,12 +15,15 @@ export default async function AdminProductsPage({
   const currentPage = parseInt(page ?? "1");
   const pageSize = 20;
 
-  const { products, count } = await getAdminProducts({
+  const result = await getAdminProducts({
     search,
     category,
     page: currentPage,
     limit: pageSize,
   });
+  const { products, count } = result.success
+    ? result.data
+    : { products: [], count: 0 };
 
   const totalPages = Math.ceil(count / pageSize);
 

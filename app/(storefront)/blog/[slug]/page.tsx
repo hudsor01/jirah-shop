@@ -23,7 +23,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { data: post } = await cachedGetBlogPostBySlug(slug);
+  const post = await cachedGetBlogPostBySlug(slug);
 
   if (!post) {
     return { title: "Post Not Found" };
@@ -46,9 +46,9 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { data: post, error } = await cachedGetBlogPostBySlug(slug);
+  const post = await cachedGetBlogPostBySlug(slug);
 
-  if (!post || error) {
+  if (!post) {
     notFound();
   }
 

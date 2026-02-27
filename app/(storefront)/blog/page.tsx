@@ -18,7 +18,7 @@ export default async function BlogPage({
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
   const tag = typeof params.tag === "string" ? params.tag : undefined;
 
-  const { data: posts, total, page: currentPage, pageSize, error } =
+  const { data: posts, total, page: currentPage, pageSize } =
     await cachedGetBlogPosts({ page, tag });
 
   const totalPages = Math.ceil(total / pageSize);
@@ -41,11 +41,7 @@ export default async function BlogPage({
         </div>
 
         {/* Posts Grid */}
-        {error ? (
-          <p className="mt-12 text-center text-muted-foreground">
-            Unable to load posts at this time. Please try again later.
-          </p>
-        ) : posts.length === 0 ? (
+        {posts.length === 0 ? (
           <p className="mt-12 text-center text-muted-foreground">
             No posts yet. Check back soon!
           </p>

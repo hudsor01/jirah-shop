@@ -38,10 +38,17 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
 };
 
 export default async function AdminDashboardPage() {
-  const [stats, recentOrders] = await Promise.all([
+  const [statsResult, recentOrdersResult] = await Promise.all([
     getOrderStats(),
     getRecentOrders(),
   ]);
+
+  const stats = statsResult.success
+    ? statsResult.data
+    : { totalRevenue: 0, ordersToday: 0, totalCustomers: 0, lowStockProducts: 0 };
+  const recentOrders = recentOrdersResult.success
+    ? recentOrdersResult.data
+    : [];
 
   const statCards = [
     {
