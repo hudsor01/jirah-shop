@@ -22,14 +22,14 @@
 --           Inline rollback commands are annotated on each statement below
 --           for review verification (search "-- ROLLBACK:").
 --
--- NULL handling:
---   Partial index WHERE clauses use IS TRUE / IS FALSE universally rather
---   than = true / = false. This is defensive: if a boolean column ever becomes
---   nullable in a future migration, IS TRUE still excludes NULLs correctly
---   whereas = true would silently include them. PostgreSQL 14+ handles
---   IS TRUE ↔ = true predicate implication for partial index matching,
---   so PostgREST's .eq("col", true) queries (which generate = true) will
---   still use these indexes on Supabase (PG 15+).
+-- Predicate form:
+--   Partial index WHERE clauses use = true / = false (not IS TRUE / IS FALSE).
+--   PostgREST's .eq("col", true) generates "WHERE col = true", which PG
+--   simplifies to a bare Var node. For predicate implication to succeed,
+--   the index predicate must match this simplified form. IS TRUE produces
+--   a BooleanTest node that does NOT match — confirmed on PG 15-17.
+--   All boolean columns in this schema are NOT NULL, so = true / = false
+--   is semantically equivalent to IS TRUE / IS FALSE.
 --
 -- Write-cost analysis:
 --   - Net index count: +9 created, -6 dropped = +3 net indexes
@@ -57,7 +57,7 @@
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_products_storefront_listing
   ON public.products (is_featured DESC, created_at DESC)
-  WHERE is_active IS TRUE;
+  WHERE is_active = true;
 -- ROLLBACK: DROP INDEX CONCURRENTLY IF EXISTS idx_products_storefront_listing;
 
 -- 1b. Product reviews — storefront reviews per product
@@ -68,7 +68,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_products_storefront_listing
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_approved_by_product
   ON public.product_reviews (product_id, created_at DESC)
-  WHERE is_approved IS TRUE;
+  WHERE is_approved = true;
 -- ROLLBACK: DROP INDEX CONCURRENTLY IF EXISTS idx_reviews_approved_by_product;
 
 -- 1c. Product reviews — admin pending reviews
@@ -79,7 +79,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_approved_by_product
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_reviews_pending
   ON public.product_reviews (created_at DESC)
-  WHERE is_approved IS FALSE;
+  WHERE is_approved = false;
 -- ROLLBACK: DROP INDEX CONCURRENTLY IF EXISTS idx_reviews_pending;
 
 -- 1d. Orders — admin listing with status filter
@@ -133,7 +133,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_user_purchases
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blog_posts_tags_gin
   ON public.blog_posts USING GIN (tags)
-  WHERE is_published IS TRUE;
+  WHERE is_published = true;
 -- ROLLBACK: DROP INDEX CONCURRENTLY IF EXISTS idx_blog_posts_tags_gin;
 
 -- 1h. Products — low stock dashboard count
@@ -147,7 +147,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_blog_posts_tags_gin
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_products_low_stock
   ON public.products (id)
-  WHERE is_active IS TRUE AND stock_quantity < 10;
+  WHERE is_active = true AND stock_quantity < 10;
 -- ROLLBACK: DROP INDEX CONCURRENTLY IF EXISTS idx_products_low_stock;
 
 -- 1i. Coupons — admin listing sort
@@ -234,7 +234,7 @@ AS $$
     'low_stock_products', (
       SELECT count(*)
       FROM public.products
-      WHERE is_active IS TRUE
+      WHERE is_active = true
         AND stock_quantity < 10
     )
   )
