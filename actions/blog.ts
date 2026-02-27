@@ -4,8 +4,13 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogPost } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
-import { parsePagination } from "@/lib/pagination";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import {
+  queryBlogPosts,
+  queryBlogPostBySlug,
+  queryAdminBlogPosts,
+  queryAdminBlogPost,
+} from "@/queries/blog";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -46,39 +51,12 @@ export async function getBlogPosts(options?: {
     return fail("Invalid query parameters");
   }
 
-  const supabase = await createClient();
-  const { page, pageSize, from, to } = parsePagination({
-    page: options?.page,
-    limit: options?.limit ?? 20,
-  });
-
-  let query = supabase
-    .from("blog_posts")
-    .select(
-      "id, title, slug, excerpt, cover_image, tags, is_published, published_at, created_at, updated_at",
-      { count: "exact" }
-    )
-    .eq("is_published", true)
-    .order("published_at", { ascending: false });
-
-  if (options?.tag) {
-    query = query.contains("tags", [options.tag]);
+  try {
+    const result = await queryBlogPosts(options);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to fetch blog posts");
   }
-
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    return fail(error.message);
-  }
-
-  return ok({
-    data: data as BlogPost[],
-    total: count ?? 0,
-    page,
-    pageSize,
-  });
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<ActionResult<BlogPost | null>> {
@@ -87,26 +65,18 @@ export async function getBlogPostBySlug(slug: string): Promise<ActionResult<Blog
     return fail("Invalid slug");
   }
 
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .single();
-
-  if (error) {
-    return ok(null);
+  try {
+    const result = await queryBlogPostBySlug(slug);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to fetch blog post");
   }
-
-  return ok(data as BlogPost);
 }
 
 // ─── Admin Blog Actions ────────────────────────────────────
 
 import { revalidatePath, updateTag } from "next/cache";
-import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sanitizeRichHTML } from "@/lib/sanitize";
 
@@ -132,28 +102,13 @@ export async function getAdminBlogPosts(options?: {
     return ok({ posts: [], count: 0 });
   }
 
-  const supabase = await createClient();
-  const { from, to } = parsePagination(options);
-
-  let query = supabase.from("blog_posts").select("*", { count: "exact" });
-
-  if (options?.search) {
-    const s = sanitizeSearchInput(options.search);
-    query = query.ilike("title", `%${s}%`);
+  try {
+    const result = await queryAdminBlogPosts(options);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching blog posts", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch blog posts");
   }
-
-  query = query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    logger.error("Error fetching blog posts", { error: error.message });
-    return fail(error.message);
-  }
-
-  return ok({ posts: (data as BlogPost[]) ?? [], count: count ?? 0 });
 }
 
 export async function getAdminBlogPost(
@@ -166,19 +121,12 @@ export async function getAdminBlogPost(
     return ok(null);
   }
 
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error || !data) {
-    return ok(null);
+  try {
+    const result = await queryAdminBlogPost(id);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to fetch blog post");
   }
-
-  return ok(data as BlogPost);
 }
 
 export async function createBlogPost(

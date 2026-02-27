@@ -5,13 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { revalidatePath, updateTag } from "next/cache";
 import { CURRENCY } from "@/lib/constants";
-import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
-import { parsePagination } from "@/lib/pagination";
 import type { Product, ProductVariant, ProductCategory, VariantType } from "@/types/database";
-import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import { queryAdminProducts, queryAdminProduct } from "@/queries/products";
 
 export type ProductFormData = {
   name: string;
@@ -109,34 +108,13 @@ export async function getAdminProducts(options?: {
     return ok({ products: [], count: 0 });
   }
 
-  const supabase = await createClient();
-  const { from, to } = parsePagination(options);
-
-  let query = supabase.from("products").select("*", { count: "exact" });
-
-  if (options?.category) {
-    query = query.eq("category", options.category);
+  try {
+    const result = await queryAdminProducts(options);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching admin products", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch products");
   }
-
-  if (options?.search) {
-    const s = sanitizeSearchInput(options.search);
-    query = query.or(
-      `name.ilike.%${s}%,brand.ilike.%${s}%`
-    );
-  }
-
-  query = query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    logger.error("Error fetching admin products", { error: error.message });
-    return fail(error.message);
-  }
-
-  return ok({ products: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)), count: count ?? 0 });
 }
 
 export async function getAdminProduct(
@@ -149,28 +127,12 @@ export async function getAdminProduct(
     return ok(null);
   }
 
-  const supabase = await createClient();
-
-  const { data: product, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error || !product) {
-    return ok(null);
+  try {
+    const result = await queryAdminProduct(id);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to fetch product");
   }
-
-  const { data: variants } = await supabase
-    .from("product_variants")
-    .select("*")
-    .eq("product_id", id)
-    .order("sort_order", { ascending: true });
-
-  return ok({
-    product: normalizeProduct(product as Record<string, unknown>),
-    variants: (variants ?? []).map((v) => normalizeVariant(v as Record<string, unknown>)),
-  });
 }
 
 export async function createProduct(

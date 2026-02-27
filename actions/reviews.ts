@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ProductReview } from "@/types/database";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
-import { parsePagination } from "@/lib/pagination";
 import { reviewLimiter } from "@/lib/rate-limit";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import { queryProductReviews, queryAdminReviews } from "@/queries/reviews";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -50,30 +50,12 @@ export async function getProductReviews(
     return fail("Invalid options");
   }
 
-  const supabase = await createClient();
-  const { page, pageSize, from, to } = parsePagination({
-    page: options?.page,
-    limit: options?.limit ?? 20,
-  });
-
-  const { data, error, count } = await supabase
-    .from("product_reviews")
-    .select("*", { count: "exact" })
-    .eq("product_id", productId)
-    .eq("is_approved", true)
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    return fail(error.message);
+  try {
+    const result = await queryProductReviews(productId, options);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to fetch reviews");
   }
-
-  return ok({
-    data: data as ProductReview[],
-    total: count ?? 0,
-    page,
-    pageSize,
-  });
 }
 
 export async function submitReview(formData: FormData): Promise<ActionResult<void>> {
@@ -143,31 +125,13 @@ export async function getAdminReviews(options?: {
     return ok({ reviews: [], count: 0 });
   }
 
-  const supabase = await createClient();
-  const { from, to } = parsePagination(options);
-
-  let query = supabase
-    .from("product_reviews")
-    .select("*", { count: "exact" });
-
-  if (options?.status === "pending") {
-    query = query.eq("is_approved", false);
-  } else if (options?.status === "approved") {
-    query = query.eq("is_approved", true);
+  try {
+    const result = await queryAdminReviews(options);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching admin reviews", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch reviews");
   }
-
-  query = query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    logger.error("Error fetching admin reviews", { error: error.message });
-    return fail(error.message);
-  }
-
-  return ok({ reviews: (data as ProductReview[]) ?? [], count: count ?? 0 });
 }
 
 export async function approveReview(

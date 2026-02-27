@@ -3,15 +3,11 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath, updateTag } from "next/cache";
-import {
-  SHIPPING_COST,
-  FREE_SHIPPING_THRESHOLD,
-  ALLOWED_SHIPPING_COUNTRIES,
-} from "@/lib/constants";
 import type { ShopSettings } from "@/types/database";
 import { requireAdmin } from "@/lib/auth";
 import { uuidSchema, formatZodError } from "@/lib/validations";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import { queryShopSettings } from "@/queries/settings";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -21,35 +17,11 @@ const SettingsFormDataSchema = z.object({
   allowed_shipping_countries: z.array(z.string().length(2, "Country code must be 2 characters")).min(1, "At least one country required"),
 });
 
-// Fallback used when the DB row hasn't been seeded yet
-const DEFAULT_SETTINGS: Omit<ShopSettings, "id" | "updated_at"> = {
-  shipping_cost: SHIPPING_COST,
-  free_shipping_threshold: FREE_SHIPPING_THRESHOLD,
-  allowed_shipping_countries: [...ALLOWED_SHIPPING_COUNTRIES],
-};
-
 export async function getShopSettings(): Promise<ShopSettings> {
   // NOTE: This function intentionally returns raw ShopSettings (not ActionResult)
   // because it always succeeds — falling back to safe defaults when the DB row is missing.
   // Callers (e.g. checkout.ts) depend on always receiving a ShopSettings object.
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("shop_settings")
-    .select("*")
-    .limit(1)
-    .single();
-
-  if (error || !data) {
-    // Return safe defaults if the table row is missing
-    return {
-      id: "",
-      ...DEFAULT_SETTINGS,
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  return data as ShopSettings;
+  return queryShopSettings();
 }
 
 export type SettingsFormData = {

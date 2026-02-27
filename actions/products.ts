@@ -1,13 +1,16 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { normalizeProduct, normalizeVariant } from "@/lib/normalize";
-import type { Product, ProductVariant } from "@/types/database";
 import { sanitizeSearchInput } from "@/lib/auth";
-import { parsePagination } from "@/lib/pagination";
 import { logger } from "@/lib/logger";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import {
+  queryProducts,
+  queryProductBySlug,
+  queryFeaturedProducts,
+  queryValidateCartPrices,
+} from "@/queries/products";
+import type { Product, ProductVariant } from "@/types/database";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -33,60 +36,13 @@ export async function getProducts(options?: {
     return ok({ data: [], total: 0, page: 1, pageSize: 20 });
   }
 
-  const supabase = await createClient();
-  const { page, pageSize, from, to } = parsePagination({
-    page: options?.page,
-    limit: options?.limit ?? 20,
-  });
-
-  let query = supabase
-    .from("products")
-    .select("*", { count: "exact" })
-    .eq("is_active", true);
-
-  if (options?.category) {
-    query = query.eq("category", options.category);
+  try {
+    const result = await queryProducts(options);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching products", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch products");
   }
-
-  if (options?.search) {
-    const s = sanitizeSearchInput(options.search);
-    query = query.or(
-      `name.ilike.%${s}%,brand.ilike.%${s}%,tags.cs.{${s}}`
-    );
-  }
-
-  switch (options?.sort) {
-    case "price-asc":
-      query = query.order("price", { ascending: true });
-      break;
-    case "price-desc":
-      query = query.order("price", { ascending: false });
-      break;
-    case "newest":
-      query = query.order("created_at", { ascending: false });
-      break;
-    case "best-sellers":
-      query = query.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
-      break;
-    default:
-      query = query.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
-  }
-
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    logger.error("Error fetching products", { error: error.message });
-    return fail(error.message);
-  }
-
-  return ok({
-    data: (data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)),
-    total: count ?? 0,
-    page,
-    pageSize,
-  });
 }
 
 export async function getProductBySlug(
@@ -97,53 +53,23 @@ export async function getProductBySlug(
     return ok(null);
   }
 
-  const supabase = await createClient();
-
-  const { data: product, error: productError } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
-
-  if (productError || !product) {
-    return ok(null);
+  try {
+    const result = await queryProductBySlug(slug);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching product by slug", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch product");
   }
-
-  const { data: variants, error: variantsError } = await supabase
-    .from("product_variants")
-    .select("*")
-    .eq("product_id", product.id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-
-  if (variantsError) {
-    logger.error("Error fetching variants", { error: variantsError.message });
-  }
-
-  return ok({
-    product: normalizeProduct(product as Record<string, unknown>),
-    variants: (variants ?? []).map((v) => normalizeVariant(v as Record<string, unknown>)),
-  });
 }
 
 export async function getFeaturedProducts(): Promise<ActionResult<Product[]>> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .eq("is_featured", true)
-    .order("created_at", { ascending: false })
-    .limit(8);
-
-  if (error) {
-    logger.error("Error fetching featured products", { error: error.message });
-    return fail(error.message);
+  try {
+    const result = await queryFeaturedProducts();
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching featured products", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch featured products");
   }
-
-  return ok((data ?? []).map((p) => normalizeProduct(p as Record<string, unknown>)));
 }
 
 // ─── Cart Price Validation ────────────────────────────────
@@ -169,49 +95,10 @@ export async function validateCartPrices(
     return ok({ valid: false, updates: [] });
   }
 
-  const supabase = await createClient();
-
-  const productIds = [...new Set(items.map((i) => i.product_id))];
-  const variantIds = items
-    .map((i) => i.variant_id)
-    .filter((id): id is string => !!id);
-
-  const [productsResult, variantsResult] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id, price")
-      .in("id", productIds),
-    variantIds.length
-      ? supabase
-          .from("product_variants")
-          .select("id, price, product_id")
-          .in("id", variantIds)
-      : Promise.resolve({ data: [] as { id: string; price: number; product_id: string }[] }),
-  ]);
-
-  const productPriceMap = new Map(
-    productsResult.data?.map((p) => [p.id, Number(p.price)]) ?? []
-  );
-  const variantPriceMap = new Map(
-    variantsResult.data?.map((v) => [v.id, Number(v.price)]) ?? []
-  );
-
-  const updates: { product_id: string; variant_id: string | null; newPrice: number }[] = [];
-
-  for (const item of items) {
-    const serverPrice = item.variant_id
-      ? variantPriceMap.get(item.variant_id)
-      : productPriceMap.get(item.product_id);
-
-    if (serverPrice !== undefined && Math.round(serverPrice * 100) !== Math.round(item.price * 100)) {
-      updates.push({
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        newPrice: serverPrice,
-      });
-    }
+  try {
+    const result = await queryValidateCartPrices(items);
+    return ok(result);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Failed to validate cart prices");
   }
-
-  return ok({ valid: updates.length === 0, updates });
 }
-

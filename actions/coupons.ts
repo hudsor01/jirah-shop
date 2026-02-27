@@ -3,13 +3,12 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { normalizeCoupon } from "@/lib/normalize";
-import { parsePagination } from "@/lib/pagination";
 import type { Coupon, DiscountType } from "@/types/database";
-import { requireAdmin, sanitizeSearchInput } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { uuidSchema, paginationSchema, formatZodError } from "@/lib/validations";
 import { type ActionResult, ok, fail } from "@/lib/action-result";
+import { queryAdminCoupons } from "@/queries/coupons";
 
 // ─── Zod Schemas ─────────────────────────────────────────
 
@@ -51,28 +50,13 @@ export async function getAdminCoupons(options?: {
     return ok({ coupons: [], count: 0 });
   }
 
-  const supabase = await createClient();
-  const { from, to } = parsePagination(options);
-
-  let query = supabase.from("coupons").select("*", { count: "exact" });
-
-  if (options?.search) {
-    const s = sanitizeSearchInput(options.search);
-    query = query.ilike("code", `%${s}%`);
+  try {
+    const result = await queryAdminCoupons(options);
+    return ok(result);
+  } catch (e) {
+    logger.error("Error fetching coupons", { error: e instanceof Error ? e.message : "Unknown" });
+    return fail(e instanceof Error ? e.message : "Failed to fetch coupons");
   }
-
-  query = query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    logger.error("Error fetching coupons", { error: error.message });
-    return fail(error.message);
-  }
-
-  return ok({ coupons: (data ?? []).map((c) => normalizeCoupon(c as Record<string, unknown>)), count: count ?? 0 });
 }
 
 export async function createCoupon(
