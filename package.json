@@ -51,7 +51,9 @@
 		"zod": "4.3.6"
 	},
 	"overrides": {
-		"minimatch": "^10.2.2"
+		"minimatch": "^10.2.3",
+		"rollup": "^4.59.0",
+		"hono": "^4.12.2"
 	},
 	"devDependencies": {
 		"@next/bundle-analyzer": "16.1.6",
