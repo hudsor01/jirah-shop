@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { useCart } from "@/providers/cart-provider";
-import { createCheckoutSession } from "@/actions/checkout";
-import { validateCartPrices } from "@/actions/products";
+import { useCheckout } from "@/hooks/use-checkout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,51 +28,11 @@ export function CartDrawer() {
     shippingCost,
     freeShippingThreshold,
     total,
-    couponCode,
     removeItem,
     updateQuantity,
-    updateItemPrices,
   } = useCart();
   const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  function handleCheckout() {
-    startTransition(async () => {
-      try {
-        // Validate cart prices against server before proceeding
-        const priceResult = await validateCartPrices(
-          items.map((i) => ({
-            product_id: i.product_id,
-            variant_id: i.variant_id,
-            price: i.price,
-          }))
-        );
-
-        if (!priceResult.success) {
-          throw new Error(priceResult.error);
-        }
-
-        if (!priceResult.data.valid) {
-          updateItemPrices(priceResult.data.updates);
-          toast.info("Some prices have been updated. Please review your cart.");
-          return;
-        }
-
-        const checkoutResult = await createCheckoutSession(items, couponCode);
-        if (!checkoutResult.success) {
-          throw new Error(checkoutResult.error);
-        }
-        if (checkoutResult.data.url) {
-          window.location.href = checkoutResult.data.url;
-        }
-      } catch (error) {
-        toast.error("Checkout failed. Please try again.", {
-          description:
-            error instanceof Error ? error.message : "Something went wrong",
-        });
-      }
-    });
-  }
+  const { checkout, isPending } = useCheckout();
 
   const amountUntilFreeShipping = freeShippingThreshold - subtotal;
 
@@ -248,7 +206,7 @@ export function CartDrawer() {
                 <Button
                   className="mt-2 w-full"
                   size="lg"
-                  onClick={handleCheckout}
+                  onClick={checkout}
                   disabled={isPending}
                 >
                   {isPending ? (

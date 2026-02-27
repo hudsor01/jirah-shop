@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import type { Product, CartItem } from "@/types/database";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "@/providers/cart-provider";
-import { toast } from "sonner";
 
 export function ProductCard({ product }: { product: Product }) {
   const [wishlisted, setWishlisted] = useState(false);
@@ -43,7 +42,6 @@ export function ProductCard({ product }: { product: Product }) {
       image: product.images?.[0] ?? "",
     };
     addItem(item);
-    toast.success(`${product.name} added to cart`);
   }
 
   return (

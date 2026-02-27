@@ -31,19 +31,17 @@ global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
 global.URL.revokeObjectURL = vi.fn()
 
 // ---------------------------------------------------------------------------
-// Helper – build a File augmented with the `errors` property the hook expects.
-// useSupabaseUpload.FileWithPreview is not exported, but at runtime the hook
-// just reads `.errors` off the File, so we can attach it manually.
+// Helper – build a FileWithPreview wrapper matching the hook's type:
+//   { file: File; preview: string; errors: readonly FileError[] }
 // ---------------------------------------------------------------------------
 function makeFile(name: string, sizeBytes = 1024, mimeType = 'image/png') {
   const content = new Uint8Array(sizeBytes)
-  const file = new File([content], name, { type: mimeType }) as File & {
-    errors: { code: string; message: string }[]
-    preview?: string
+  const file = new File([content], name, { type: mimeType })
+  return {
+    file,
+    preview: 'blob:mock-url',
+    errors: [] as { code: string; message: string }[],
   }
-  file.errors = []
-  file.preview = 'blob:mock-url'
-  return file
 }
 
 // ---------------------------------------------------------------------------
@@ -180,7 +178,7 @@ describe('useSupabaseUpload – storage integration', () => {
     )
 
     expect(filesWithError).toHaveLength(1)
-    expect(filesWithError[0].name).toBe('extra.png')
+    expect(filesWithError[0].file.name).toBe('extra.png')
   })
 
   // -------------------------------------------------------------------------

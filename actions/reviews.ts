@@ -159,33 +159,10 @@ export async function approveReview(
   return ok(undefined);
 }
 
-export async function rejectReview(
-  id: string
-): Promise<ActionResult<void>> {
-  await requireAdmin();
-
-  const idParsed = uuidSchema.safeParse(id);
-  if (!idParsed.success) {
-    return fail("Invalid review ID");
-  }
-
-  const supabase = await createClient();
-
-  // Delete rather than update: reviews start as is_approved=false, so
-  // updating to false is a no-op. Deletion removes it from the queue permanently.
-  const { error } = await supabase
-    .from("product_reviews")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return fail(error.message);
-  }
-
-  revalidatePath("/admin/reviews");
-  return ok(undefined);
-}
-
+/**
+ * Permanently remove a review by ID.
+ * Used by both "reject" (admin moderation) and "delete" (admin cleanup).
+ */
 export async function deleteReview(
   id: string
 ): Promise<ActionResult<void>> {
@@ -210,3 +187,9 @@ export async function deleteReview(
   revalidatePath("/admin/reviews");
   return ok(undefined);
 }
+
+/**
+ * Reject a pending review (alias for deleteReview).
+ * Reviews start as is_approved=false, so deletion removes them permanently.
+ */
+export const rejectReview = deleteReview;

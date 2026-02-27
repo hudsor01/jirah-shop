@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,25 @@ export function CouponForm({ coupon, open, onOpenChange }: CouponFormProps) {
     setIsActive(true);
     setExpiresAt("");
   }
+
+  // Reset form fields when switching between create and edit mode
+  useEffect(() => {
+    if (coupon) {
+      setCode(coupon.code ?? "");
+      setDiscountType(coupon.discount_type ?? "percentage");
+      setDiscountValue(coupon.discount_value?.toString() ?? "");
+      setMinOrderAmount(coupon.min_order_amount?.toString() ?? "");
+      setMaxUses(coupon.max_uses?.toString() ?? "");
+      setIsActive(coupon.is_active ?? true);
+      setExpiresAt(
+        coupon.expires_at
+          ? new Date(coupon.expires_at).toISOString().split("T")[0]
+          : ""
+      );
+    } else {
+      resetForm();
+    }
+  }, [coupon]);
 
   function handleSubmit() {
     const formData: CouponFormData = {

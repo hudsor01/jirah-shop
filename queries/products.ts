@@ -31,7 +31,7 @@ export async function queryProducts(options?: {
   if (options?.search) {
     const s = sanitizeSearchInput(options.search);
     query = query.or(
-      `name.ilike.%${s}%,brand.ilike.%${s}%,tags.cs.{${s}}`
+      `name.ilike.%${s}%,brand.ilike.%${s}%,tags::text.ilike.%${s}%`
     );
   }
 

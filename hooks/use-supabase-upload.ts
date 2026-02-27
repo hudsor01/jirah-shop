@@ -3,8 +3,10 @@ import { useDropzone, type FileError, type FileRejection } from 'react-dropzone'
 
 import { createClient } from '@/lib/supabase/client'
 
-interface FileWithPreview extends File {
-  preview?: string
+/** Wrapper that pairs a File with its object URL preview and validation errors. */
+type FileWithPreview = {
+  file: File
+  preview: string
   errors: readonly FileError[]
 }
 
@@ -73,40 +75,41 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      const validFiles = acceptedFiles
-        .filter((file) => !files.find((x) => x.name === file.name))
-        .map((file) => {
-          ;(file as FileWithPreview).preview = URL.createObjectURL(file)
-          ;(file as FileWithPreview).errors = []
-          return file as FileWithPreview
-        })
+      const validFiles: FileWithPreview[] = acceptedFiles
+        .filter((file) => !files.find((x) => x.file.name === file.name))
+        .map((file) => ({
+          file,
+          preview: URL.createObjectURL(file),
+          errors: [],
+        }))
 
-      const invalidFiles = fileRejections.map(({ file, errors }) => {
-        ;(file as FileWithPreview).preview = URL.createObjectURL(file)
-        ;(file as FileWithPreview).errors = errors
-        return file as FileWithPreview
-      })
+      const invalidFiles: FileWithPreview[] = fileRejections.map(({ file, errors }) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        errors,
+      }))
 
       const newFiles = [...files, ...validFiles, ...invalidFiles]
 
       setFiles(newFiles)
     },
-    [files, setFiles]
+    [files]
   )
 
   // Cleanup object URLs to prevent memory leaks
   useEffect(() => {
     return () => {
-      files.forEach((file) => {
-        if (file.preview) {
-          URL.revokeObjectURL(file.preview);
+      files.forEach((f) => {
+        if (f.preview) {
+          URL.revokeObjectURL(f.preview)
         }
-      });
-    };
-    // Only cleanup on unmount — revoking during files state changes
-    // would break preview display for files still in the list
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      })
+    }
+    // Only cleanup on unmount -- revoking during files state changes
+    // would break preview display for files still in the list.
+    // The `files` ref is captured in the cleanup closure at unmount time,
+    // so all current previews are properly revoked.
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- intentional unmount-only cleanup
 
   const dropzoneProps = useDropzone({
     onDrop,
@@ -120,35 +123,34 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   const onUpload = useCallback(async () => {
     setLoading(true)
 
-    // [Joshen] This is to support handling partial successes
-    // If any files didn't upload for any reason, hitting "Upload" again will only upload the files that had errors
+    // Support handling partial successes --
+    // If any files didn't upload, hitting "Upload" again will only retry those
     const filesWithErrors = errors.map((x) => x.name)
     const filesToUpload =
       filesWithErrors.length > 0
         ? [
-            ...files.filter((f) => filesWithErrors.includes(f.name)),
-            ...files.filter((f) => !successes.includes(f.name)),
+            ...files.filter((f) => filesWithErrors.includes(f.file.name)),
+            ...files.filter((f) => !successes.includes(f.file.name)),
           ]
         : files
 
     const responses = await Promise.all(
-      filesToUpload.map(async (file) => {
+      filesToUpload.map(async (f) => {
         const { error } = await supabase.storage
           .from(bucketName)
-          .upload(!!path ? `${path}/${file.name}` : file.name, file, {
+          .upload(path ? `${path}/${f.file.name}` : f.file.name, f.file, {
             cacheControl: cacheControl.toString(),
             upsert,
           })
         if (error) {
-          return { name: file.name, message: error.message }
+          return { name: f.file.name, message: error.message }
         } else {
-          return { name: file.name, message: undefined }
+          return { name: f.file.name, message: undefined }
         }
       })
     )
 
     const responseErrors = responses.filter((x) => x.message !== undefined)
-    // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
     setErrors(responseErrors)
 
     const responseSuccesses = responses.filter((x) => x.message === undefined)
@@ -158,28 +160,30 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     setSuccesses(newSuccesses)
 
     setLoading(false)
-  }, [files, path, bucketName, errors, successes])
+  }, [files, path, bucketName, errors, successes, supabase.storage, cacheControl, upsert])
 
   useEffect(() => {
     if (files.length === 0) {
       setErrors([])
     }
 
-    // If the number of files doesn't exceed the maxFiles parameter, remove the error 'Too many files' from each file
+    // If the number of files doesn't exceed the maxFiles parameter,
+    // remove the error 'Too many files' from each file
     if (files.length <= maxFiles) {
       let changed = false
-      const newFiles = files.map((file) => {
-        if (file.errors.some((e) => e.code === 'too-many-files')) {
-          file.errors = file.errors.filter((e) => e.code !== 'too-many-files')
+      const newFiles = files.map((f) => {
+        if (f.errors.some((e) => e.code === 'too-many-files')) {
+          const filtered = f.errors.filter((e) => e.code !== 'too-many-files')
           changed = true
+          return { ...f, errors: filtered }
         }
-        return file
+        return f
       })
       if (changed) {
         setFiles(newFiles)
       }
     }
-  }, [files.length, setFiles, maxFiles])
+  }, [files.length, maxFiles, files])
 
   return {
     files,
@@ -197,4 +201,4 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   }
 }
 
-export { useSupabaseUpload, type UseSupabaseUploadOptions, type UseSupabaseUploadReturn }
+export { useSupabaseUpload, type UseSupabaseUploadOptions, type UseSupabaseUploadReturn, type FileWithPreview }

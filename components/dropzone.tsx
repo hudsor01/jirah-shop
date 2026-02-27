@@ -41,7 +41,7 @@ const Dropzone = ({
   const isInvalid =
     (restProps.isDragActive && restProps.isDragReject) ||
     (restProps.errors.length > 0 && !restProps.isSuccess) ||
-    restProps.files.some((file) => file.errors.length !== 0)
+    restProps.files.some((f) => f.errors.length !== 0)
 
   return (
     <DropzoneContext.Provider value={{ ...restProps }}>
@@ -79,7 +79,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
 
   const handleRemoveFile = useCallback(
     (fileName: string) => {
-      setFiles(files.filter((file) => file.name !== fileName))
+      setFiles(files.filter((f) => f.file.name !== fileName))
     },
     [files, setFiles]
   )
@@ -97,18 +97,18 @@ const DropzoneContent = ({ className }: { className?: string }) => {
 
   return (
     <div className={cn('flex flex-col', className)}>
-      {files.map((file, idx) => {
-        const fileError = errors.find((e) => e.name === file.name)
-        const isSuccessfullyUploaded = !!successes.find((e) => e === file.name)
+      {files.map((fileItem, idx) => {
+        const fileError = errors.find((e) => e.name === fileItem.file.name)
+        const isSuccessfullyUploaded = !!successes.find((e) => e === fileItem.file.name)
 
         return (
           <div
-            key={`${file.name}-${idx}`}
+            key={`${fileItem.file.name}-${idx}`}
             className="flex items-center gap-x-4 border-b py-2 first:mt-4 last:mb-4 "
           >
-            {file.type.startsWith('image/') ? (
+            {fileItem.file.type.startsWith('image/') ? (
               <div className="h-10 w-10 rounded border overflow-hidden shrink-0 bg-muted flex items-center justify-center">
-                <img src={file.preview} alt={file.name} className="object-cover" />
+                <img src={fileItem.preview} alt={fileItem.file.name} className="object-cover" />
               </div>
             ) : (
               <div className="h-10 w-10 rounded border bg-muted flex items-center justify-center">
@@ -117,15 +117,15 @@ const DropzoneContent = ({ className }: { className?: string }) => {
             )}
 
             <div className="shrink grow flex flex-col items-start truncate">
-              <p title={file.name} className="text-sm truncate max-w-full">
-                {file.name}
+              <p title={fileItem.file.name} className="text-sm truncate max-w-full">
+                {fileItem.file.name}
               </p>
-              {file.errors.length > 0 ? (
+              {fileItem.errors.length > 0 ? (
                 <p className="text-xs text-destructive">
-                  {file.errors
+                  {fileItem.errors
                     .map((e) =>
                       e.message.startsWith('File is larger than')
-                        ? `File is larger than ${formatBytes(maxFileSize, 2)} (Size: ${formatBytes(file.size, 2)})`
+                        ? `File is larger than ${formatBytes(maxFileSize, 2)} (Size: ${formatBytes(fileItem.file.size, 2)})`
                         : e.message
                     )
                     .join(', ')}
@@ -137,7 +137,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
               ) : isSuccessfullyUploaded ? (
                 <p className="text-xs text-primary">Successfully uploaded file</p>
               ) : (
-                <p className="text-xs text-muted-foreground">{formatBytes(file.size, 2)}</p>
+                <p className="text-xs text-muted-foreground">{formatBytes(fileItem.file.size, 2)}</p>
               )}
             </div>
 
@@ -146,7 +146,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                 size="icon"
                 variant="link"
                 className="shrink-0 justify-self-end text-muted-foreground hover:text-foreground"
-                onClick={() => handleRemoveFile(file.name)}
+                onClick={() => handleRemoveFile(fileItem.file.name)}
               >
                 <X />
               </Button>
@@ -165,7 +165,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
           <Button
             variant="outline"
             onClick={onUpload}
-            disabled={files.some((file) => file.errors.length !== 0) || loading}
+            disabled={files.some((f) => f.errors.length !== 0) || loading}
           >
             {loading ? (
               <>

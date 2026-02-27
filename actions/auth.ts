@@ -3,13 +3,10 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { SITE_URL } from "@/lib/constants";
 import { sanitizeRedirect } from "@/lib/auth";
 import { emailSchema, passwordSchema, formatZodError } from "@/lib/validations";
 import { authLimiter } from "@/lib/rate-limit";
-import { type ActionResult, ok, fail } from "@/lib/action-result";
-
-/** @deprecated Use ActionResult<void> | null directly */
+import { type ActionResult, fail } from "@/lib/action-result";
 
 const SignInSchema = z.object({
   email: emailSchema,
@@ -100,23 +97,6 @@ export async function signUpWithEmail(
   }
 
   redirect("/login?message=Check your email to confirm your account.");
-}
-
-export async function signInWithGoogle(): Promise<ActionResult<{ url: string }>> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${SITE_URL}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    return fail(error.message);
-  }
-
-  return ok({ url: data.url });
 }
 
 export async function signOut() {

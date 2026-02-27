@@ -5,17 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -26,7 +17,6 @@ import { Separator } from "@/components/ui/separator";
 import { ImageUpload } from "@/components/admin/image-upload";
 import { VariantManager } from "@/components/admin/variant-manager";
 
-import { CATEGORIES } from "@/lib/constants";
 import {
   createProduct,
   updateProduct,
@@ -35,6 +25,12 @@ import {
 } from "@/actions/admin-products";
 import type { Product, ProductVariant, ProductCategory } from "@/types/database";
 import { generateSlug } from "@/lib/slug";
+
+import { BasicInfoFields } from "@/components/admin/product-form/basic-info-fields";
+import { PricingFields } from "@/components/admin/product-form/pricing-fields";
+import { CategoryBrandFields } from "@/components/admin/product-form/category-brand-fields";
+import { DetailsFields } from "@/components/admin/product-form/details-fields";
+import { StatusFields } from "@/components/admin/product-form/status-fields";
 
 type ProductFormProps = {
   product?: Product;
@@ -45,6 +41,7 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // ── Form state ────────────────────────────────────────
   const [name, setName] = useState(product?.name ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
   const [shortDescription, setShortDescription] = useState(
@@ -71,11 +68,8 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
   const [hasVariants, setHasVariants] = useState(
     product?.has_variants ?? false
   );
-  const [isFeatured, setIsFeatured] = useState(
-    product?.is_featured ?? false
-  );
+  const [isFeatured, setIsFeatured] = useState(product?.is_featured ?? false);
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
-
   const [variantList, setVariantList] = useState<VariantFormData[]>(
     variants.map((v) => ({
       id: v.id,
@@ -94,6 +88,7 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
     }))
   );
 
+  // ── Handlers ──────────────────────────────────────────
   function handleNameChange(value: string) {
     setName(value);
     if (!product) {
@@ -108,9 +103,7 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
       description,
       short_description: shortDescription,
       price: parseFloat(price) || 0,
-      compare_at_price: compareAtPrice
-        ? parseFloat(compareAtPrice)
-        : null,
+      compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
       category,
       subcategory: subcategory || null,
       brand,
@@ -156,165 +149,39 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
     });
   }
 
+  // ── Render ────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      {/* Basic Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-sans text-base">
-            Basic Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Hydrating Rose Serum"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input
-                id="slug"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder="hydrating-rose-serum"
-              />
-            </div>
-          </div>
+      <BasicInfoFields
+        name={name}
+        slug={slug}
+        shortDescription={shortDescription}
+        description={description}
+        handleNameChange={handleNameChange}
+        setSlug={setSlug}
+        setShortDescription={setShortDescription}
+        setDescription={setDescription}
+      />
 
-          <div className="space-y-2">
-            <Label htmlFor="shortDescription">Short Description</Label>
-            <Input
-              id="shortDescription"
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              placeholder="A brief one-liner about this product"
-            />
-          </div>
+      <PricingFields
+        price={price}
+        compareAtPrice={compareAtPrice}
+        stockQuantity={stockQuantity}
+        setPrice={setPrice}
+        setCompareAtPrice={setCompareAtPrice}
+        setStockQuantity={setStockQuantity}
+      />
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Full Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed product description..."
-              className="min-h-32"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pricing & Inventory */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-sans text-base">
-            Pricing & Inventory
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price ($)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="29.99"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="compareAtPrice">Compare at Price ($)</Label>
-              <Input
-                id="compareAtPrice"
-                type="number"
-                step="0.01"
-                min="0"
-                value={compareAtPrice}
-                onChange={(e) => setCompareAtPrice(e.target.value)}
-                placeholder="39.99"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stockQuantity">Stock Quantity</Label>
-              <Input
-                id="stockQuantity"
-                type="number"
-                min="0"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-                placeholder="100"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category & Brand */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-sans text-base">
-            Category & Brand
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select
-                value={category}
-                onValueChange={(v) => setCategory(v as ProductCategory)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subcategory">Subcategory</Label>
-              <Input
-                id="subcategory"
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                placeholder="Serums"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="brand">Brand</Label>
-              <Input
-                id="brand"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder="Jirah Beauty"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Switch
-              id="isOwnBrand"
-              checked={isOwnBrand}
-              onCheckedChange={setIsOwnBrand}
-            />
-            <Label htmlFor="isOwnBrand">Own brand product</Label>
-          </div>
-        </CardContent>
-      </Card>
+      <CategoryBrandFields
+        category={category}
+        subcategory={subcategory}
+        brand={brand}
+        isOwnBrand={isOwnBrand}
+        setCategory={setCategory}
+        setSubcategory={setSubcategory}
+        setBrand={setBrand}
+        setIsOwnBrand={setIsOwnBrand}
+      />
 
       {/* Images */}
       <Card>
@@ -326,43 +193,14 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
         </CardContent>
       </Card>
 
-      {/* Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-sans text-base">
-            Product Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="ingredients">Ingredients</Label>
-            <Textarea
-              id="ingredients"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              placeholder="Water, Glycerin, Rosa Damascena Extract..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="howToUse">How to Use</Label>
-            <Textarea
-              id="howToUse"
-              value={howToUse}
-              onChange={(e) => setHowToUse(e.target.value)}
-              placeholder="Apply 2-3 drops to clean skin..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma-separated)</Label>
-            <Input
-              id="tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="hydrating, rose, k-beauty, serum"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <DetailsFields
+        ingredients={ingredients}
+        howToUse={howToUse}
+        tags={tags}
+        setIngredients={setIngredients}
+        setHowToUse={setHowToUse}
+        setTags={setTags}
+      />
 
       {/* Variants */}
       <Card>
@@ -393,30 +231,12 @@ export function ProductForm({ product, variants = [] }: ProductFormProps) {
         </CardContent>
       </Card>
 
-      {/* Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-sans text-base">Status</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Switch
-              id="isActive"
-              checked={isActive}
-              onCheckedChange={setIsActive}
-            />
-            <Label htmlFor="isActive">Active (visible in storefront)</Label>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch
-              id="isFeatured"
-              checked={isFeatured}
-              onCheckedChange={setIsFeatured}
-            />
-            <Label htmlFor="isFeatured">Featured product</Label>
-          </div>
-        </CardContent>
-      </Card>
+      <StatusFields
+        isActive={isActive}
+        isFeatured={isFeatured}
+        setIsActive={setIsActive}
+        setIsFeatured={setIsFeatured}
+      />
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
