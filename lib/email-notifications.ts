@@ -3,6 +3,7 @@ import "server-only";
 import { createElement } from "react";
 import { sendEmail, sendEmailAsync } from "@/lib/email";
 import { getAdminEmail } from "@/lib/env.server";
+import { logger } from "@/lib/logger";
 import type {
   OrderEmailProps,
   ContactEmailProps,
@@ -13,6 +14,20 @@ import ContactAutoReply from "@/emails/contact-auto-reply";
 import AdminNewOrder from "@/emails/admin-new-order";
 import AdminContactAlert from "@/emails/admin-contact-alert";
 import OrderStatusUpdate from "@/emails/order-status-update";
+
+/**
+ * Safely resolve the admin email address.
+ * Returns null (instead of throwing) when ADMIN_EMAIL is not configured,
+ * so callers can degrade gracefully.
+ */
+function safeGetAdminEmail(): string | null {
+  try {
+    return getAdminEmail();
+  } catch {
+    logger.warn("ADMIN_EMAIL not configured — skipping admin notification");
+    return null;
+  }
+}
 
 // ─── Order Emails ────────────────────────────────────────
 
@@ -31,10 +46,14 @@ export function notifyOrderConfirmation(props: OrderEmailProps): void {
 /**
  * Notify admin of a new order.
  * Fire-and-forget — used in webhooks.
+ * Silently skipped if ADMIN_EMAIL is not configured.
  */
 export function notifyAdminNewOrder(props: OrderEmailProps): void {
+  const adminEmail = safeGetAdminEmail();
+  if (!adminEmail) return;
+
   sendEmailAsync({
-    to: getAdminEmail(),
+    to: adminEmail,
     subject: `New Order #${props.orderNumber} — $${props.total.toFixed(2)}`,
     react: createElement(AdminNewOrder, props),
   });
@@ -59,12 +78,16 @@ export function notifyContactAutoReply(
 /**
  * Alert admin about a new contact submission.
  * Uses replyTo so the admin can respond directly to the customer.
+ * Silently returns { success: false } if ADMIN_EMAIL is not configured.
  */
 export function notifyAdminContactAlert(
   props: ContactEmailProps
 ): Promise<{ success: boolean; messageId?: string }> {
+  const adminEmail = safeGetAdminEmail();
+  if (!adminEmail) return Promise.resolve({ success: false });
+
   return sendEmail({
-    to: getAdminEmail(),
+    to: adminEmail,
     subject: `New Contact: ${props.subject || "No subject"} — ${props.name}`,
     react: createElement(AdminContactAlert, props),
     replyTo: props.email,

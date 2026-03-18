@@ -86,6 +86,11 @@ export const reviewLimiter = createRateLimiter("review", {
   windowMs: 60_000, // 5 per minute
 });
 
+export const newsletterLimiter = createRateLimiter("newsletter", {
+  maxRequests: 3,
+  windowMs: 60_000, // 3 per minute
+});
+
 // Periodic cleanup of stale entries (runs every 5 minutes)
 if (typeof setInterval !== "undefined") {
   setInterval(() => {

@@ -16,7 +16,7 @@ INSERT INTO public.products (name, slug, description, short_description, price, 
  ARRAY[
    'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=1200&q=80&fit=crop',
    'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=1200&q=80&fit=crop',
-   'https://images.unsplash.com/photo-1570194065650-d99fb4ee09b1?w=1200&q=80&fit=crop'
+   'https://images.unsplash.com/photo-1715750968540-841103c78d47?w=1200&q=80&fit=crop'
  ],
  'Water, Hyaluronic Acid, Rosa Damascena Extract, Niacinamide, Glycerin, Panthenol',
  'Apply 2-3 drops to clean, damp skin morning and night. Follow with moisturizer.',
@@ -88,7 +88,7 @@ INSERT INTO public.products (name, slug, description, short_description, price, 
  'Dewy cushion foundation SPF 50+ with skincare benefits. Shade: Fair.',
  34.00, NULL, 'makeup', 'Jirah', true,
  ARRAY[
-   'https://images.unsplash.com/photo-1631214500115-598fc2cb8ada?w=1200&q=80&fit=crop',
+   'https://images.unsplash.com/photo-1758738880475-dac2ab1c92d4?w=1200&q=80&fit=crop',
    'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=1200&q=80&fit=crop'
  ],
  'Water, Titanium Dioxide, Hyaluronic Acid, Centella Asiatica, Niacinamide',
@@ -115,7 +115,7 @@ INSERT INTO public.products (name, slug, description, short_description, price, 
  22.00, NULL, 'body', 'Jirah', true,
  ARRAY[
    'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=1200&q=80&fit=crop',
-   'https://images.unsplash.com/photo-1570194065650-d99fb4ee09b1?w=1200&q=80&fit=crop'
+   'https://images.unsplash.com/photo-1715750968540-841103c78d47?w=1200&q=80&fit=crop'
  ],
  'Shea Butter, Coconut Oil, Yuzu Extract, Raw Honey, Jojoba Oil, Vitamin E',
  'Apply generously to clean, damp skin after bathing.',
@@ -150,7 +150,7 @@ INSERT INTO public.products (name, slug, description, short_description, price, 
  'Cult-favorite 96.3% snail mucin essence for repair and glass-skin glow.',
  21.00, 25.00, 'skincare', 'COSRX', false,
  ARRAY[
-   'https://images.unsplash.com/photo-1570194065650-d99fb4ee09b1?w=1200&q=80&fit=crop',
+   'https://images.unsplash.com/photo-1715750968540-841103c78d47?w=1200&q=80&fit=crop',
    'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=1200&q=80&fit=crop'
  ],
  'Snail Secretion Filtrate (96.3%), Betaine, Sodium Hyaluronate, Panthenol',
@@ -162,7 +162,7 @@ INSERT INTO public.products (name, slug, description, short_description, price, 
  'Overnight berry lip mask for soft, smooth lips by morning.',
  22.00, NULL, 'skincare', 'Laneige', false,
  ARRAY[
-   'https://images.unsplash.com/photo-1631214503930-2e89151c17d0?w=1200&q=80&fit=crop',
+   'https://images.unsplash.com/photo-1591360236480-4ed861025fa1?w=1200&q=80&fit=crop',
    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200&q=80&fit=crop'
  ],
  'Berry Complex, Vitamin C, Hyaluronic Acid, Shea Butter, Coconut Oil',
