@@ -7,6 +7,7 @@ import { Search, User, Menu, Heart } from "lucide-react";
 import { MobileMenu } from "@/components/storefront/mobile-menu";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { useAuth } from "@/providers/auth-provider";
+import { BrandName } from "@/components/brand-name";
 
 const navLinks = [
   { label: "Shop", href: "/shop" },
@@ -52,10 +53,7 @@ export function Header() {
 
               {/* Logo */}
               <Link href="/" className="flex items-center gap-1.5">
-                <span className="font-serif text-2xl font-bold">
-                  <span className="text-primary">J</span>irah
-                  <span className="ml-0.5 text-lg font-semibold tracking-wide text-muted-foreground">Shop</span>
-                </span>
+                <BrandName className="text-2xl" />
               </Link>
             </div>
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import { BrandName } from "@/components/brand-name";
 import {
   Card,
   CardHeader,
@@ -43,9 +44,7 @@ export function BlogCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-linear-to-br/oklch from-primary/20 to-accent/20">
-            <span className="font-serif text-lg text-muted-foreground/50">
-              Jirah Shop
-            </span>
+            <BrandName className="text-lg text-muted-foreground/50" />
           </div>
         )}
       </div>

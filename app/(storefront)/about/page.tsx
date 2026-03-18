@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { BrandName } from "@/components/brand-name";
 
 export const metadata: Metadata = {
   title: "Our Story",
@@ -88,7 +89,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Jirah Shop was born from a passion for Asian beauty rituals passed
+            <BrandName className="text-lg" /> was born from a passion for Asian beauty rituals passed
             down through generations. We blend time-honored ingredients with
             modern innovation to create products that celebrate every skin tone,
             type, and story.
@@ -129,7 +130,7 @@ export default function AboutPage() {
                 decided to create them myself.
               </p>
               <p>
-                Jirah Shop is my love letter to Asian beauty — a bridge between
+                <BrandName /> is my love letter to Asian beauty — a bridge between
                 the wisdom of generations past and the innovation of today. Every
                 product we make and every brand we curate reflects this
                 philosophy.
