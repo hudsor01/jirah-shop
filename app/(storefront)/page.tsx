@@ -1,3 +1,4 @@
+// Supabase is unreachable during Vercel static builds; render at runtime only.
 export const dynamic = 'force-dynamic'
 
 import Image from 'next/image'
