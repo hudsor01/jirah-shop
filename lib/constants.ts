@@ -58,7 +58,4 @@ export const SHIPPING_COST = 5.99;
 export const FREE_SHIPPING_THRESHOLD = 50;
 export const LOW_STOCK_THRESHOLD = 10;
 export const ALLOWED_SHIPPING_COUNTRIES = ["US", "CA", "GB", "AU"] as const;
-if (!process.env.NEXT_PUBLIC_SITE_URL) {
-  throw new Error("Missing NEXT_PUBLIC_SITE_URL environment variable");
-}
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";

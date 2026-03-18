@@ -102,6 +102,4 @@ export default withSentryConfig(analyzedConfig, {
   silent: !process.env.CI,
   widenClientFileUpload: true,
   sourcemaps: { disable: false },
-  disableLogger: true,
-  automaticVercelMonitors: true,
 });

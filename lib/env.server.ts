@@ -8,6 +8,10 @@ import "server-only";
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
+    if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
+      console.warn(`Missing environment variable: ${name}`);
+      return "";
+    }
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
